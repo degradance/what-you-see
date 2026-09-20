@@ -1,0 +1,11 @@
+import { defineWidget } from '../registry'
+
+export default defineWidget({
+  id: 'wiki-live',
+  exhibit: 'A',
+  title: 'Who is rewriting history right now?',
+  subtitle: 'Live edits across Wikipedia and its sister projects · stream.wikimedia.org',
+  stamp: 'Live',
+  span: 2,
+  load: () => import('./Widget.vue'),
+})
