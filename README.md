@@ -12,8 +12,8 @@ Dark ("Redacted") by default, light ("Declassified") behind the switch.
 
 ## Status
 
-Live now: **Exhibit A**, a real-time feed of Wikipedia edits, **Exhibit B**, a globe of the past day's earthquakes, **Exhibit C**, the ISS with its trail and field of view, and **Exhibit D**, a week of the planetary K-index.
-Next: Hacker News, then a performance HUD backed by measurements.
+Live now: **Exhibit A**, a real-time feed of Wikipedia edits, **Exhibit B**, a globe of the past day's earthquakes, **Exhibit C**, the ISS with its trail and field of view, **Exhibit D**, a week of the planetary K-index, and **Exhibit E**, the Hacker News front page.
+Next: a performance HUD backed by measurements.
 
 ## Run it
 
@@ -54,9 +54,9 @@ All keyless, HTTPS, CORS-enabled. Nothing is stored, and there is no backend.
 - USGS earthquakes (`earthquake.usgs.gov`)
 - wheretheiss.at (ISS position and history)
 - NOAA SWPC (planetary K-index)
-- Hacker News is next
+- Hacker News (`hacker-news.firebaseio.com`)
 
-Editor names are deliberately never read or shown: anonymous Wikipedia edits are attributed to IP addresses.
+Editor names are deliberately never read or shown: anonymous Wikipedia edits are attributed to IP addresses. Hacker News authors are left out the same way.
 
 ## License
 

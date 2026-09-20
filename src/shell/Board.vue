@@ -4,7 +4,6 @@ import type { StreamStatus } from '@/core/streams/sse'
 import { widgets } from '@/widgets'
 import Card from './Card.vue'
 import Decrypting from './Decrypting.vue'
-import Redacted from './Redacted.vue'
 import SignalLost from './SignalLost.vue'
 import StringBoard from './StringBoard.vue'
 
@@ -35,7 +34,7 @@ const links = [
   { from: 'wiki-live', to: 'seismic' },
   { from: 'seismic', to: 'iss' },
   { from: 'iss', to: 'solar' },
-  { from: 'solar', to: 'redacted' },
+  { from: 'solar', to: 'chatter' },
 ]
 
 // Full class names, not built strings: Tailwind only generates utilities it can find in the source.
@@ -57,16 +56,6 @@ const ROWS = { 1: '', 2: 'lg:row-span-2' } as const
         :status="statuses[def.id]"
       >
         <component :is="component" @status="statuses[def.id] = $event" />
-      </Card>
-
-      <Card
-        card-id="redacted"
-        exhibit="E"
-        title="Access denied"
-        subtitle="Hover, tap or focus a bar to declassify it."
-        stamp="Redacted"
-      >
-        <Redacted />
       </Card>
     </StringBoard>
   </section>

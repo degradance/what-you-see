@@ -2,26 +2,30 @@ import { nextDelay } from '../backoff'
 import { fetchParsed } from './fetch-json'
 import type { StreamStatus } from './sse'
 
-export interface PollOptions<T> {
-  url: string
+export interface PollTaskOptions<T> {
+  // Returns `null` when the round failed; must not throw. `signal` aborts a round that is superseded or disposed.
+  load: (signal: AbortSignal) => Promise<T | null>
   intervalMs: number
-  // Returns `null` to reject a payload; must not throw.
-  parse: (json: unknown) => T | null
   onData: (value: T) => void
   onStatus?: (status: StreamStatus) => void
   pauseWhenHidden?: boolean
+}
+
+export interface PollOptions<T> extends Omit<PollTaskOptions<T>, 'load'> {
+  url: string
+  // Returns `null` to reject a payload; must not throw.
+  parse: (json: unknown) => T | null
   fetchFn?: typeof fetch
 }
 
-export function poll<T>({
-  url,
+// For feeds that take more than one request per round, such as a list of ids followed by one call per item.
+export function pollTask<T>({
+  load,
   intervalMs,
-  parse,
   onData,
   onStatus,
   pauseWhenHidden = true,
-  fetchFn,
-}: PollOptions<T>): () => void {
+}: PollTaskOptions<T>): () => void {
   let timer: ReturnType<typeof setTimeout> | undefined
   let controller: AbortController | null = null
   let attempt = 0
@@ -36,7 +40,7 @@ export function poll<T>({
   const tick = async () => {
     const own = new AbortController()
     controller = own
-    const value = await fetchParsed(url, parse, { signal: own.signal, fetchFn })
+    const value = await load(own.signal)
     // A superseded or disposed request must not reschedule: the new one already owns the timer.
     if (own.signal.aborted) return
     if (value === null) {
@@ -75,4 +79,8 @@ export function poll<T>({
     stop()
     document.removeEventListener('visibilitychange', onVisibilityChange)
   }
+}
+
+export function poll<T>({ url, parse, fetchFn, ...rest }: PollOptions<T>): () => void {
+  return pollTask({ ...rest, load: (signal) => fetchParsed(url, parse, { signal, fetchFn }) })
 }

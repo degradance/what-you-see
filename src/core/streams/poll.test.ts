@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { poll } from './poll'
+import { poll, pollTask } from './poll'
 import type { StreamStatus } from './sse'
 
 const json = (body: unknown, ok = true) =>
@@ -187,5 +187,34 @@ describe('poll', () => {
     await vi.advanceTimersByTimeAsync(10_000)
     expect(fetchFn).toHaveBeenCalledTimes(1)
     expect(listeners.size).toBe(0)
+  })
+
+  it('runs any loader, and a round that returns null backs off like a failed request', async () => {
+    const load = vi.fn().mockResolvedValueOnce(null).mockResolvedValue('ok')
+    const onData = vi.fn()
+    const statuses: StreamStatus[] = []
+    const dispose = pollTask({ load, intervalMs: 60_000, onData, onStatus: (s) => statuses.push(s) })
+
+    await flush()
+    expect(statuses).toEqual(['connecting', 'reconnecting'])
+
+    await vi.advanceTimersByTimeAsync(500)
+    expect(onData).toHaveBeenCalledWith('ok')
+    expect(statuses.at(-1)).toBe('live')
+    dispose()
+  })
+
+  it('aborts the signal it hands to the loader when disposed', async () => {
+    let seen: AbortSignal | undefined
+    const load = vi.fn((signal: AbortSignal) => {
+      seen = signal
+      return new Promise<never>(() => {})
+    })
+    const dispose = pollTask({ load, intervalMs: 60_000, onData: vi.fn() })
+
+    await flush()
+    expect(seen?.aborted).toBe(false)
+    dispose()
+    expect(seen?.aborted).toBe(true)
   })
 })

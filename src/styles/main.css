@@ -17,8 +17,6 @@
   --signal: #ff5566;
   --warn: #f2b84b;
   --live: #5be3a1;
-  --redact: #000000;
-  --redact-edge: #2a2e36;
   --glow: radial-gradient(ellipse 80% 50% at 50% -10%, rgb(255 85 102 / 0.09), transparent 70%);
   --scanlines: 0.14;
   --card-shadow: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 14px 32px -14px rgb(0 0 0 / 0.9);
@@ -35,8 +33,6 @@
   --signal: #b3142a;
   --warn: #7a4f00;
   --live: #0d6a44;
-  --redact: #1c1a16;
-  --redact-edge: transparent;
   --glow: radial-gradient(ellipse 80% 50% at 50% -10%, rgb(179 20 42 / 0.06), transparent 70%);
   --scanlines: 0;
   --card-shadow: 0 1px 0 rgb(255 255 255 / 0.5) inset, 0 10px 24px -14px rgb(60 45 10 / 0.45);
