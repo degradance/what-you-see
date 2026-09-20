@@ -3,7 +3,9 @@ import { defineAsyncComponent } from 'vue'
 import { widgets } from '@/widgets'
 import Card from './Card.vue'
 import Decrypting from './Decrypting.vue'
+import Redacted from './Redacted.vue'
 import SignalLost from './SignalLost.vue'
+import StringBoard from './StringBoard.vue'
 
 // Async wrappers are created once, outside render, so widgets are not reloaded on re-render.
 const cards = widgets.map((def) => ({
@@ -17,36 +19,36 @@ const cards = widgets.map((def) => ({
   }),
 }))
 
+const links = [{ from: 'wiki-live', to: 'redacted' }]
+
 const SPAN = { 1: '', 2: 'lg:col-span-2' } as const
 </script>
 
 <template>
-  <section aria-label="Evidence board" class="grid grid-cols-1 gap-8 lg:grid-cols-3">
-    <Card
-      v-for="{ def, component } in cards"
-      :key="def.id"
-      :class="SPAN[def.span]"
-      :exhibit="def.exhibit"
-      :title="def.title"
-      :subtitle="def.subtitle"
-      :stamp="def.stamp"
-    >
-      <component :is="component" />
-    </Card>
+  <section aria-label="Evidence board">
+    <StringBoard :links="links" class="grid grid-cols-1 gap-8 lg:grid-cols-3 lg:gap-x-14">
+      <Card
+        v-for="{ def, component } in cards"
+        :key="def.id"
+        :card-id="def.id"
+        :class="SPAN[def.span]"
+        :exhibit="def.exhibit"
+        :title="def.title"
+        :subtitle="def.subtitle"
+        :stamp="def.stamp"
+      >
+        <component :is="component" />
+      </Card>
 
-    <Card
-      exhibit="B–E"
-      title="Access denied"
-      subtitle="More exhibits are being declassified."
-      stamp="Redacted"
-    >
-      <p class="sr-only">Redacted.</p>
-      <div class="flex flex-col gap-2.5" aria-hidden="true">
-        <span class="block h-[1.1em] w-[88%] bg-ink" />
-        <span class="block h-[1.1em] w-[64%] bg-ink" />
-        <span class="block h-[1.1em] w-[76%] bg-ink" />
-        <span class="block h-[1.1em] w-[41%] bg-ink" />
-      </div>
-    </Card>
+      <Card
+        card-id="redacted"
+        exhibit="B–E"
+        title="Access denied"
+        subtitle="Hover, tap or focus a bar to declassify it."
+        stamp="Redacted"
+      >
+        <Redacted />
+      </Card>
+    </StringBoard>
   </section>
 </template>

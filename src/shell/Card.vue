@@ -1,5 +1,6 @@
 <script setup lang="ts">
 defineProps<{
+  cardId: string
   exhibit: string
   title: string
   subtitle?: string
@@ -8,8 +9,7 @@ defineProps<{
 </script>
 
 <template>
-  <article class="card relative border border-line bg-surface p-5 pt-6 sm:p-6 sm:pt-7">
-    <span class="pin" aria-hidden="true" />
+  <article :data-card-id="cardId" class="card relative border border-line bg-surface p-5 sm:p-6">
     <header class="flex items-start justify-between gap-4">
       <p class="text-[11px] tracking-[0.18em] text-muted uppercase">Exhibit {{ exhibit }}</p>
       <span v-if="stamp" class="stamp">{{ stamp }}</span>
@@ -23,22 +23,9 @@ defineProps<{
 </template>
 
 <style scoped>
-/* Cards stay perfectly upright: rotated text renders soft. Only the ornaments tilt. */
+/* Cards stay perfectly upright: rotated text renders soft. Only the stamp tilts. */
 .card {
   box-shadow: var(--card-shadow);
-}
-
-.pin {
-  position: absolute;
-  top: -7px;
-  left: 24px;
-  width: 13px;
-  height: 13px;
-  border-radius: 50%;
-  background: var(--signal);
-  box-shadow:
-    inset -2px -2px 3px rgb(0 0 0 / 0.35),
-    0 2px 4px rgb(0 0 0 / 0.5);
 }
 
 .stamp {
