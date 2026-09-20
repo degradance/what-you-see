@@ -47,3 +47,8 @@ All keyless, HTTPS, CORS-enabled. Nothing is stored, and there is no backend.
 - USGS earthquakes, wheretheiss.at, NOAA SWPC and Hacker News are next
 
 Editor names are deliberately never read or shown: anonymous Wikipedia edits are attributed to IP addresses.
+
+## License
+
+The code is released under the [MIT License](LICENSE). Fonts (Instrument Serif, JetBrains Mono) are distributed through
+[Fontsource](https://fontsource.org) under the SIL Open Font License 1.1. Data belongs to its respective providers.
