@@ -2,7 +2,6 @@
 import { reactive } from 'vue'
 
 const entries = [
-  'B · Seismic anomalies',
   'C · Orbital surveillance',
   'D · Solar interference',
   'E · Chatter',

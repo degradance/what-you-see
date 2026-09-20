@@ -19,7 +19,10 @@ const cards = widgets.map((def) => ({
   }),
 }))
 
-const links = [{ from: 'wiki-live', to: 'redacted' }]
+const links = [
+  { from: 'wiki-live', to: 'redacted' },
+  { from: 'wiki-live', to: 'seismic' },
+]
 
 const SPAN = { 1: '', 2: 'lg:col-span-2' } as const
 </script>
@@ -42,7 +45,7 @@ const SPAN = { 1: '', 2: 'lg:col-span-2' } as const
 
       <Card
         card-id="redacted"
-        exhibit="B–E"
+        exhibit="C–E"
         title="Access denied"
         subtitle="Hover, tap or focus a bar to declassify it."
         stamp="Redacted"

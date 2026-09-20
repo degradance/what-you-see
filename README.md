@@ -12,8 +12,8 @@ Dark ("Redacted") by default, light ("Declassified") behind the switch.
 
 ## Status
 
-Live now: **Exhibit A**, a real-time feed of Wikipedia edits.
-Next: an earthquake globe, the ISS, space weather and Hacker News, then a performance HUD backed by measurements.
+Live now: **Exhibit A**, a real-time feed of Wikipedia edits, and **Exhibit B**, a globe of the past day's earthquakes.
+Next: the ISS, space weather and Hacker News, then a performance HUD backed by measurements.
 
 ## Run it
 
@@ -35,7 +35,8 @@ npm run dev
 
 - **Vue 3 + TypeScript + Vite + Tailwind v4.** Design tokens are CSS variables, so both themes share one set of components.
 - **`src/core/`** is framework-agnostic: a ring buffer, a sliding-window rate counter, exponential backoff with jitter, and
-  an SSE client that reconnects and pauses while the tab is hidden.
+  an SSE client and a polling helper that both reconnect with backoff and pause while the tab is hidden, and a canvas
+  globe (`d3-geo`) that stops drawing when it is off screen and honours `prefers-reduced-motion`.
 - **Every exhibit is a lazy chunk.** A widget is small eager metadata plus `load: () => import('./Widget.vue')`, so the
   shell stays light and each feed only costs bytes when it is on the board.
 - **Hot paths avoid reactivity.** Stream events go into plain buffers; the DOM updates four times a second, whatever the
@@ -47,11 +48,13 @@ npm run dev
 All keyless, HTTPS, CORS-enabled. Nothing is stored, and there is no backend.
 
 - Wikimedia recent changes (`stream.wikimedia.org`)
-- USGS earthquakes, wheretheiss.at, NOAA SWPC and Hacker News are next
+- USGS earthquakes (`earthquake.usgs.gov`)
+- wheretheiss.at, NOAA SWPC and Hacker News are next
 
 Editor names are deliberately never read or shown: anonymous Wikipedia edits are attributed to IP addresses.
 
 ## License
 
 The code is released under the [MIT License](LICENSE). Fonts (Instrument Serif, JetBrains Mono) are distributed through
-[Fontsource](https://fontsource.org) under the SIL Open Font License 1.1. Data belongs to its respective providers.
+[Fontsource](https://fontsource.org) under the SIL Open Font License 1.1. Coastlines come from [Natural Earth](https://www.naturalearthdata.com) (public domain) via the `world-atlas` package;
+`node scripts/build-land.mjs` regenerates the compact copy in `src/core/globe/land.json`. Data belongs to its respective providers.
