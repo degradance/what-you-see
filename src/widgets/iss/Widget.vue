@@ -5,10 +5,12 @@ import { createGlobe, type Globe, type GlobeFrame } from '@/core/globe/globe'
 import { fetchParsed } from '@/core/streams/fetch-json'
 import { poll } from '@/core/streams/poll'
 import type { StreamStatus } from '@/core/streams/sse'
-import { STATUS_LABEL, STATUS_TONE } from '@/core/streams/status'
 import { formatKm, formatLat, formatLon } from './format'
 import { parsePosition, parsePositions, type Position } from './schema'
 import { chunkTrack, footprintRadiusDeg, historyTimestamps, mergeTrack } from './track'
+
+// The card header shows the connection state, so the widget only reports it.
+const emit = defineEmits<{ status: [status: StreamStatus] }>()
 
 const API = 'https://api.wheretheiss.at/v1/satellites/25544'
 // The API allows 350 requests per 5 minutes; this uses 60.
@@ -21,7 +23,6 @@ const TRAIL_CHUNKS = 6
 const PULSE_MS = 2_000
 const TAU = Math.PI * 2
 
-const status = ref<StreamStatus>('connecting')
 const position = shallowRef<Position | null>(null)
 const canvas = ref<HTMLCanvasElement | null>(null)
 
@@ -118,7 +119,7 @@ onMounted(async () => {
     intervalMs: POLL_MS,
     parse: parsePosition,
     onData,
-    onStatus: (s) => (status.value = s),
+    onStatus: (s) => emit('status', s),
   })
 
   const timestamps = historyTimestamps(Date.now(), HISTORY_COUNT, HISTORY_STEP_S)
@@ -143,25 +144,13 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="flex flex-col gap-4 @xl:grid @xl:grid-cols-2 @xl:grid-rows-[auto_auto_1fr] @xl:items-start @xl:gap-x-8">
-    <div class="flex items-end justify-between gap-4 @xl:col-start-2">
+    <div class="@xl:col-start-2">
       <div>
         <p class="font-serif text-7xl leading-none text-ink">
           {{ position ? formatKm(position.speedKmh) : '—' }}
         </p>
         <p class="mt-2 text-xs tracking-[0.18em] text-muted uppercase">km/h · orbital speed</p>
       </div>
-      <p
-        class="flex items-center gap-2 text-[11px] tracking-[0.18em] uppercase"
-        :class="STATUS_TONE[status]"
-        role="status"
-      >
-        <span
-          class="size-2 rounded-full bg-current"
-          :class="{ 'motion-safe:animate-pulse': status === 'live' }"
-          aria-hidden="true"
-        />
-        {{ STATUS_LABEL[status] }}
-      </p>
     </div>
 
     <canvas

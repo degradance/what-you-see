@@ -2,10 +2,12 @@
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
 import { createGlobe, type Globe, type GlobeFrame } from '@/core/globe/globe'
 import { poll } from '@/core/streams/poll'
-import { STATUS_LABEL, STATUS_TONE } from '@/core/streams/status'
 import type { StreamStatus } from '@/core/streams/sse'
 import { formatAgo, isRecent, markerRadius } from './quakes'
 import { parseQuakes, type Quake } from './schema'
+
+// The card header shows the connection state, so the widget only reports it.
+const emit = defineEmits<{ status: [status: StreamStatus] }>()
 
 const FEED_URL = 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson'
 // The feed is cached for 60 s upstream; asking faster only returns the same bytes.
@@ -16,7 +18,6 @@ const LATEST_COUNT = 16
 const PULSE_MS = 2_400
 const TAU = Math.PI * 2
 
-const status = ref<StreamStatus>('connecting')
 const quakes = shallowRef<Quake[]>([])
 const now = ref(Date.now())
 const canvas = ref<HTMLCanvasElement | null>(null)
@@ -84,7 +85,7 @@ onMounted(() => {
     intervalMs: POLL_MS,
     parse: parseQuakes,
     onData,
-    onStatus: (s) => (status.value = s),
+    onStatus: (s) => emit('status', s),
   })
   clock = setInterval(() => (now.value = Date.now()), 30_000)
 })
@@ -99,23 +100,11 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="flex flex-1 flex-col gap-4 @xl:grid @xl:grid-cols-2 @xl:grid-rows-[auto_auto_1fr] @xl:items-start @xl:gap-x-8">
-    <div class="flex items-end justify-between gap-4 @xl:col-start-2">
+    <div class="@xl:col-start-2">
       <div>
         <p class="font-serif text-7xl leading-none text-ink">{{ quakes.length }}</p>
         <p class="mt-2 text-xs tracking-[0.18em] text-muted uppercase">events · past 24 h</p>
       </div>
-      <p
-        class="flex items-center gap-2 text-[11px] tracking-[0.18em] uppercase"
-        :class="STATUS_TONE[status]"
-        role="status"
-      >
-        <span
-          class="size-2 rounded-full bg-current"
-          :class="{ 'motion-safe:animate-pulse': status === 'live' }"
-          aria-hidden="true"
-        />
-        {{ STATUS_LABEL[status] }}
-      </p>
     </div>
 
     <canvas

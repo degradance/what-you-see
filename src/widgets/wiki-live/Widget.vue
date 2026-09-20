@@ -3,8 +3,10 @@ import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
 import { RateCounter } from '@/core/rate-counter'
 import { RingBuffer } from '@/core/ring-buffer'
 import { connectSSE, type StreamStatus } from '@/core/streams/sse'
-import { STATUS_LABEL, STATUS_TONE } from '@/core/streams/status'
 import { parseChange, type Change } from './schema'
+
+// The card header shows the connection state, so the widget only reports it.
+const emit = defineEmits<{ status: [status: StreamStatus] }>()
 
 const STREAM_URL = 'https://stream.wikimedia.org/v2/stream/recentchange'
 const FEED_SIZE = 8
@@ -17,7 +19,6 @@ const botRate = new RateCounter(RATE_WINDOW_S)
 const latest = new RingBuffer<Change>(FEED_SIZE)
 let dirty = false
 
-const status = ref<StreamStatus>('connecting')
 const feed = shallowRef<Change[]>([])
 const humansPerSec = ref(0)
 const botsPerSec = ref(0)
@@ -51,7 +52,7 @@ onMounted(() => {
     url: STREAM_URL,
     parse: parseChange,
     onMessage: onChange,
-    onStatus: (s) => (status.value = s),
+    onStatus: (s) => emit('status', s),
   })
   flushTimer = setInterval(flush, FLUSH_MS)
 })
@@ -64,25 +65,13 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="flex flex-col gap-5">
-    <div class="flex items-end justify-between gap-4">
+    <div>
       <div>
         <p class="font-serif text-7xl leading-none text-ink">{{ total.toFixed(1) }}</p>
         <p class="mt-2 text-xs tracking-[0.18em] text-muted uppercase">
           edits per second · {{ RATE_WINDOW_S }} s average
         </p>
       </div>
-      <p
-        class="flex items-center gap-2 text-[11px] tracking-[0.18em] uppercase"
-        :class="STATUS_TONE[status]"
-        role="status"
-      >
-        <span
-          class="size-2 rounded-full bg-current"
-          :class="{ 'motion-safe:animate-pulse': status === 'live' }"
-          aria-hidden="true"
-        />
-        {{ STATUS_LABEL[status] }}
-      </p>
     </div>
 
     <div>

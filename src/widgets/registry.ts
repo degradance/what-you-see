@@ -5,7 +5,6 @@ export interface WidgetDef {
   exhibit: string
   title: string
   subtitle: string
-  stamp: string
   // Size on the board in grid cells; below the `lg` breakpoint every card is a single full-width cell.
   span: 1 | 2
   rows: 1 | 2

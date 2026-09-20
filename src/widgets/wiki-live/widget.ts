@@ -5,7 +5,6 @@ export default defineWidget({
   exhibit: 'A',
   title: 'Who is rewriting history right now?',
   subtitle: 'Live edits across Wikipedia and its sister projects · stream.wikimedia.org',
-  stamp: 'Live',
   span: 2,
   rows: 1,
   load: () => import('./Widget.vue'),
