@@ -7,5 +7,6 @@ export default defineWidget({
   subtitle: 'Live edits across Wikipedia and its sister projects · stream.wikimedia.org',
   stamp: 'Live',
   span: 2,
+  rows: 1,
   load: () => import('./Widget.vue'),
 })

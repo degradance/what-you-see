@@ -7,5 +7,6 @@ export default defineWidget({
   subtitle: 'Earthquakes of the past 24 hours, M2.5 and up · earthquake.usgs.gov',
   stamp: 'Live',
   span: 1,
+  rows: 2,
   load: () => import('./Widget.vue'),
 })

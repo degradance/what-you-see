@@ -1,6 +1,7 @@
-import { geoDistance, geoGraticule10, geoOrthographic, geoPath } from 'd3-geo'
+import { geoDistance, geoGraticule10, geoOrthographic, geoPath, type GeoPermissibleObjects } from 'd3-geo'
 import { land } from './land'
 import { readPalette, type Palette } from './palette'
+import { clamp, easeFactor, shortestDelta } from './view'
 
 export interface GlobeFrame {
   ctx: CanvasRenderingContext2D
@@ -10,6 +11,8 @@ export interface GlobeFrame {
   motion: boolean
   // Screen position of a coordinate, or null when it is on the far side.
   project: (lon: number, lat: number) => readonly [number, number] | null
+  // Starts a new path holding this geometry; the caller decides whether to stroke or fill it.
+  trace: (object: GeoPermissibleObjects) => void
 }
 
 export interface GlobeOptions {
@@ -20,6 +23,8 @@ export interface GlobeOptions {
 export interface Globe {
   // Motion on: a frame loop that spins the globe. Off: frames are drawn only when something changes.
   setMotion: (on: boolean) => void
+  // Keeps a point at the centre of the disc instead of spinning; `null` goes back to spinning.
+  follow: (target: { lon: number; lat: number } | null) => void
   invalidate: () => void
   dispose: () => void
 }
@@ -28,13 +33,18 @@ const SPIN_DEG_PER_S = 6
 // Spin is slow and pulses are soft, so 30 fps looks identical to 60 and halves the main-thread cost.
 const FRAME_MS = 1000 / 30
 const START_TILT = -20
+// Tilting all the way to a high latitude would squash the map, and the followed point stays on the disc anyway.
+const FOLLOW_MAX_TILT = 35
+const FOLLOW_HALF_LIFE_MS = 300
+// After a drag the user is looking somewhere on purpose; do not pull the globe back at once.
+const FOLLOW_RESUME_MS = 4000
 const MAX_DPR = 2
 const PADDING = 2
 const RAD_TO_DEG = 180 / Math.PI
 
 export function createGlobe({ canvas, overlay }: GlobeOptions): Globe {
   const ctx = canvas.getContext('2d')
-  if (!ctx) return { setMotion() {}, invalidate() {}, dispose() {} }
+  if (!ctx) return { setMotion() {}, follow() {}, invalidate() {}, dispose() {} }
 
   const projection = geoOrthographic().rotate([0, START_TILT])
   const path = geoPath(projection, ctx)
@@ -48,6 +58,8 @@ export function createGlobe({ canvas, overlay }: GlobeOptions): Globe {
   let phi = START_TILT
   let motion = false
   let dragging = false
+  let dragEndedAt = -Infinity
+  let target: { lon: number; lat: number } | null = null
   let onScreen = true
   let frameId = 0
   let last = 0
@@ -92,7 +104,11 @@ export function createGlobe({ canvas, overlay }: GlobeOptions): Globe {
     ctx.lineWidth = 1
     ctx.stroke()
 
-    overlay?.({ ctx, now: Date.now(), palette, motion, project })
+    const trace = (object: GeoPermissibleObjects) => {
+      ctx.beginPath()
+      path(object)
+    }
+    overlay?.({ ctx, now: Date.now(), palette, motion, project, trace })
   }
 
   const frame = (time: number) => {
@@ -105,11 +121,21 @@ export function createGlobe({ canvas, overlay }: GlobeOptions): Globe {
     // A long gap (background tab, debugger) must not make the globe jump.
     const dt = last ? Math.min(time - last, 100) : 0
     last = time
-    if (motion && !dragging) lambda += (SPIN_DEG_PER_S * dt) / 1000
+    if (motion && !dragging) {
+      if (!target) lambda += (SPIN_DEG_PER_S * dt) / 1000
+      else if (!followPaused(time)) {
+        const k = easeFactor(dt, FOLLOW_HALF_LIFE_MS)
+        lambda += shortestDelta(lambda, -target.lon) * k
+        phi += (followTilt(target) - phi) * k
+      }
+    }
     draw()
     if (motion && shouldRun()) schedule()
     else last = 0
   }
+
+  const followTilt = (t: { lat: number }) => -clamp(t.lat, -FOLLOW_MAX_TILT, FOLLOW_MAX_TILT)
+  const followPaused = (time: number) => dragging || time - dragEndedAt < FOLLOW_RESUME_MS
 
   const shouldRun = () => onScreen && !document.hidden
 
@@ -172,6 +198,7 @@ export function createGlobe({ canvas, overlay }: GlobeOptions): Globe {
     invalidate()
   }
   const onPointerEnd = () => {
+    if (dragging) dragEndedAt = performance.now()
     dragging = false
   }
   canvas.addEventListener('pointerdown', onPointerDown)
@@ -182,6 +209,16 @@ export function createGlobe({ canvas, overlay }: GlobeOptions): Globe {
   return {
     setMotion(on) {
       motion = on
+      invalidate()
+    },
+    follow(next) {
+      const first = target === null
+      target = next
+      // Without a frame loop nothing eases, so every update snaps; with one, only the first does.
+      if (next && (first || !motion) && !followPaused(performance.now())) {
+        lambda = -next.lon
+        phi = followTilt(next)
+      }
       invalidate()
     },
     invalidate,

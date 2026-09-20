@@ -1,4 +1,5 @@
 import { nextDelay } from '../backoff'
+import { fetchParsed } from './fetch-json'
 import type { StreamStatus } from './sse'
 
 export interface PollOptions<T> {
@@ -19,7 +20,7 @@ export function poll<T>({
   onData,
   onStatus,
   pauseWhenHidden = true,
-  fetchFn = (input, init) => fetch(input, init),
+  fetchFn,
 }: PollOptions<T>): () => void {
   let timer: ReturnType<typeof setTimeout> | undefined
   let controller: AbortController | null = null
@@ -32,20 +33,10 @@ export function poll<T>({
     controller = null
   }
 
-  const request = async (signal: AbortSignal): Promise<T | null> => {
-    try {
-      const response = await fetchFn(url, { signal })
-      if (!response.ok) return null
-      return parse(await response.json())
-    } catch {
-      return null
-    }
-  }
-
   const tick = async () => {
     const own = new AbortController()
     controller = own
-    const value = await request(own.signal)
+    const value = await fetchParsed(url, parse, { signal: own.signal, fetchFn })
     // A superseded or disposed request must not reschedule: the new one already owns the timer.
     if (own.signal.aborted) return
     if (value === null) {

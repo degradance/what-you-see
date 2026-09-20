@@ -12,8 +12,8 @@ Dark ("Redacted") by default, light ("Declassified") behind the switch.
 
 ## Status
 
-Live now: **Exhibit A**, a real-time feed of Wikipedia edits, and **Exhibit B**, a globe of the past day's earthquakes.
-Next: the ISS, space weather and Hacker News, then a performance HUD backed by measurements.
+Live now: **Exhibit A**, a real-time feed of Wikipedia edits, **Exhibit B**, a globe of the past day's earthquakes, and **Exhibit C**, the ISS with its trail and field of view.
+Next: space weather and Hacker News, then a performance HUD backed by measurements.
 
 ## Run it
 
@@ -36,9 +36,12 @@ npm run dev
 - **Vue 3 + TypeScript + Vite + Tailwind v4.** Design tokens are CSS variables, so both themes share one set of components.
 - **`src/core/`** is framework-agnostic: a ring buffer, a sliding-window rate counter, exponential backoff with jitter, and
   an SSE client and a polling helper that both reconnect with backoff and pause while the tab is hidden, and a canvas
-  globe (`d3-geo`) that stops drawing when it is off screen and honours `prefers-reduced-motion`.
+  globe (`d3-geo`) that can follow a point, stops drawing when it is off screen and honours `prefers-reduced-motion`.
+  Exhibits B and C share one globe chunk, so the second one costs about 2 KB.
 - **Every exhibit is a lazy chunk.** A widget is small eager metadata plus `load: () => import('./Widget.vue')`, so the
   shell stays light and each feed only costs bytes when it is on the board.
+- **A bento board.** Cards declare their size in grid cells, and each card body is a CSS size container: a widget lays
+  itself out by the width of its card (`@xl:` container variants), not by the viewport.
 - **Hot paths avoid reactivity.** Stream events go into plain buffers; the DOM updates four times a second, whatever the
   event rate.
 - **Data is validated at the edge** with valibot; malformed events are dropped, never thrown.
@@ -49,7 +52,8 @@ All keyless, HTTPS, CORS-enabled. Nothing is stored, and there is no backend.
 
 - Wikimedia recent changes (`stream.wikimedia.org`)
 - USGS earthquakes (`earthquake.usgs.gov`)
-- wheretheiss.at, NOAA SWPC and Hacker News are next
+- wheretheiss.at (ISS position and history)
+- NOAA SWPC and Hacker News are next
 
 Editor names are deliberately never read or shown: anonymous Wikipedia edits are attributed to IP addresses.
 

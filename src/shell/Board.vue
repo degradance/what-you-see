@@ -19,22 +19,26 @@ const cards = widgets.map((def) => ({
   }),
 }))
 
+// The strings follow the story order, and each pair is adjacent on the board so a string never crosses a card.
 const links = [
-  { from: 'wiki-live', to: 'redacted' },
   { from: 'wiki-live', to: 'seismic' },
+  { from: 'seismic', to: 'iss' },
+  { from: 'iss', to: 'redacted' },
 ]
 
+// Full class names, not built strings: Tailwind only generates utilities it can find in the source.
 const SPAN = { 1: '', 2: 'lg:col-span-2' } as const
+const ROWS = { 1: '', 2: 'lg:row-span-2' } as const
 </script>
 
 <template>
   <section aria-label="Evidence board">
-    <StringBoard :links="links" class="grid grid-cols-1 gap-8 lg:grid-cols-3 lg:gap-x-14">
+    <StringBoard :links="links" class="grid grid-cols-1 gap-8 lg:grid-cols-3 lg:gap-10">
       <Card
         v-for="{ def, component } in cards"
         :key="def.id"
         :card-id="def.id"
-        :class="SPAN[def.span]"
+        :class="[SPAN[def.span], ROWS[def.rows]]"
         :exhibit="def.exhibit"
         :title="def.title"
         :subtitle="def.subtitle"
@@ -45,7 +49,7 @@ const SPAN = { 1: '', 2: 'lg:col-span-2' } as const
 
       <Card
         card-id="redacted"
-        exhibit="C–E"
+        exhibit="D–E"
         title="Access denied"
         subtitle="Hover, tap or focus a bar to declassify it."
         stamp="Redacted"

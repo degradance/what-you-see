@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
 import { createGlobe, type Globe, type GlobeFrame } from '@/core/globe/globe'
 import { poll } from '@/core/streams/poll'
+import { STATUS_LABEL, STATUS_TONE } from '@/core/streams/status'
 import type { StreamStatus } from '@/core/streams/sse'
 import { formatAgo, isRecent, markerRadius } from './quakes'
 import { parseQuakes, type Quake } from './schema'
@@ -9,7 +10,9 @@ import { parseQuakes, type Quake } from './schema'
 const FEED_URL = 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson'
 // The feed is cached for 60 s upstream; asking faster only returns the same bytes.
 const POLL_MS = 60_000
-const LATEST_COUNT = 4
+// More rows than a card usually shows: the list starts at four rows and grows into the spare height of its bento cell.
+// It grows from a fixed basis: `flex-1` would size the column by all rows whenever its height is not fixed.
+const LATEST_COUNT = 16
 const PULSE_MS = 2_400
 const TAU = Math.PI * 2
 
@@ -28,19 +31,6 @@ const strongest = computed(() =>
 const latest = computed(() =>
   [...quakes.value].sort((a, b) => b.time - a.time).slice(0, LATEST_COUNT),
 )
-
-const STATUS_LABEL: Record<StreamStatus, string> = {
-  connecting: 'Connecting',
-  live: 'Live',
-  reconnecting: 'Signal lost',
-  paused: 'Paused · tab hidden',
-}
-const STATUS_TONE: Record<StreamStatus, string> = {
-  connecting: 'text-warn',
-  live: 'text-live',
-  reconnecting: 'text-signal',
-  paused: 'text-muted',
-}
 
 function overlay({ ctx, now: t, palette, motion, project }: GlobeFrame) {
   for (const quake of drawList) {
@@ -108,8 +98,8 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="flex flex-col gap-4">
-    <div class="flex items-end justify-between gap-4">
+  <div class="flex flex-1 flex-col gap-4 @xl:grid @xl:grid-cols-2 @xl:grid-rows-[auto_auto_1fr] @xl:items-start @xl:gap-x-8">
+    <div class="flex items-end justify-between gap-4 @xl:col-start-2">
       <div>
         <p class="font-serif text-7xl leading-none text-ink">{{ quakes.length }}</p>
         <p class="mt-2 text-xs tracking-[0.18em] text-muted uppercase">events · past 24 h</p>
@@ -130,11 +120,11 @@ onBeforeUnmount(() => {
 
     <canvas
       ref="canvas"
-      class="aspect-square w-full cursor-grab touch-pan-y active:cursor-grabbing"
+      class="aspect-square w-full cursor-grab touch-pan-y active:cursor-grabbing @xl:col-start-1 @xl:row-span-3 @xl:row-start-1"
       aria-hidden="true"
     />
 
-    <p class="text-xs text-muted">
+    <p class="text-xs text-muted @xl:col-start-2">
       <span class="text-signal">●</span> {{ lastHour }} in the last hour ·
       <span v-if="strongest">strongest M {{ strongest.mag.toFixed(1) }}</span>
       <span v-else>strongest —</span>
@@ -142,8 +132,14 @@ onBeforeUnmount(() => {
       Correlation with anything: none. Drag the globe.
     </p>
 
-    <ol class="divide-y divide-line border-y border-line text-xs">
-      <li v-for="quake in latest" :key="quake.id" class="flex items-baseline gap-3 py-1.5">
+    <ol
+      class="min-h-0 shrink basis-[7.25rem] grow divide-y divide-line overflow-hidden border-t border-line text-xs lg:[mask-image:linear-gradient(to_bottom,#000_calc(100%-2rem),transparent)] @xl:col-start-2 @xl:border-y @xl:[mask-image:none]"
+    >
+      <li
+        v-for="quake in latest"
+        :key="quake.id"
+        class="flex items-baseline gap-3 py-1.5 @xl:nth-[n+5]:hidden"
+      >
         <span class="w-9 shrink-0 text-ink">M {{ quake.mag.toFixed(1) }}</span>
         <span class="min-w-0 flex-1 truncate">{{ quake.place }}</span>
         <span class="shrink-0 text-[10px] tracking-[0.18em] text-muted uppercase">

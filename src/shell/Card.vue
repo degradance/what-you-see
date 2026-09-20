@@ -9,14 +9,16 @@ defineProps<{
 </script>
 
 <template>
-  <article :data-card-id="cardId" class="card relative border border-line bg-surface p-5 sm:p-6">
+  <article :data-card-id="cardId" class="card relative flex min-w-0 flex-col border border-line bg-surface p-5 sm:p-6">
     <header class="flex items-start justify-between gap-4">
       <p class="text-[11px] tracking-[0.18em] text-muted uppercase">Exhibit {{ exhibit }}</p>
       <span v-if="stamp" class="stamp">{{ stamp }}</span>
     </header>
     <h2 class="mt-3 font-serif text-3xl leading-tight">{{ title }}</h2>
     <p v-if="subtitle" class="mt-1 text-xs text-muted">{{ subtitle }}</p>
-    <div class="mt-6">
+    <!-- A size container: widgets switch layout with `@xl:` variants on the width of their card.
+         It is also a flex column, so a widget root with `flex-1` can absorb the slack of a stretched bento cell. -->
+    <div class="@container mt-6 flex flex-1 flex-col">
       <slot />
     </div>
   </article>

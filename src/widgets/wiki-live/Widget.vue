@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
 import { RateCounter } from '@/core/rate-counter'
 import { RingBuffer } from '@/core/ring-buffer'
 import { connectSSE, type StreamStatus } from '@/core/streams/sse'
+import { STATUS_LABEL, STATUS_TONE } from '@/core/streams/status'
 import { parseChange, type Change } from './schema'
 
 const STREAM_URL = 'https://stream.wikimedia.org/v2/stream/recentchange'
@@ -25,19 +26,6 @@ const total = computed(() => humansPerSec.value + botsPerSec.value)
 const botShare = computed(() =>
   total.value > 0 ? Math.round((botsPerSec.value / total.value) * 100) : 0,
 )
-
-const STATUS_LABEL: Record<StreamStatus, string> = {
-  connecting: 'Connecting',
-  live: 'Live',
-  reconnecting: 'Signal lost',
-  paused: 'Paused · tab hidden',
-}
-const STATUS_TONE: Record<StreamStatus, string> = {
-  connecting: 'text-warn',
-  live: 'text-live',
-  reconnecting: 'text-signal',
-  paused: 'text-muted',
-}
 
 function onChange(change: Change) {
   ;(change.bot ? botRate : humanRate).add(Date.now())
