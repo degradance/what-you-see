@@ -1,10 +1,7 @@
 <script setup lang="ts">
 import { reactive } from 'vue'
 
-const entries = [
-  'D · Solar interference',
-  'E · Chatter',
-]
+const entries = ['E · Chatter']
 
 const declassified = reactive(new Set<number>())
 

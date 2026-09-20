@@ -12,8 +12,8 @@ Dark ("Redacted") by default, light ("Declassified") behind the switch.
 
 ## Status
 
-Live now: **Exhibit A**, a real-time feed of Wikipedia edits, **Exhibit B**, a globe of the past day's earthquakes, and **Exhibit C**, the ISS with its trail and field of view.
-Next: space weather and Hacker News, then a performance HUD backed by measurements.
+Live now: **Exhibit A**, a real-time feed of Wikipedia edits, **Exhibit B**, a globe of the past day's earthquakes, **Exhibit C**, the ISS with its trail and field of view, and **Exhibit D**, a week of the planetary K-index.
+Next: Hacker News, then a performance HUD backed by measurements.
 
 ## Run it
 
@@ -53,7 +53,8 @@ All keyless, HTTPS, CORS-enabled. Nothing is stored, and there is no backend.
 - Wikimedia recent changes (`stream.wikimedia.org`)
 - USGS earthquakes (`earthquake.usgs.gov`)
 - wheretheiss.at (ISS position and history)
-- NOAA SWPC and Hacker News are next
+- NOAA SWPC (planetary K-index)
+- Hacker News is next
 
 Editor names are deliberately never read or shown: anonymous Wikipedia edits are attributed to IP addresses.
 

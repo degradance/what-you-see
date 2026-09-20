@@ -34,7 +34,8 @@ const cards = widgets.map((def) => ({
 const links = [
   { from: 'wiki-live', to: 'seismic' },
   { from: 'seismic', to: 'iss' },
-  { from: 'iss', to: 'redacted' },
+  { from: 'iss', to: 'solar' },
+  { from: 'solar', to: 'redacted' },
 ]
 
 // Full class names, not built strings: Tailwind only generates utilities it can find in the source.
@@ -60,7 +61,7 @@ const ROWS = { 1: '', 2: 'lg:row-span-2' } as const
 
       <Card
         card-id="redacted"
-        exhibit="D–E"
+        exhibit="E"
         title="Access denied"
         subtitle="Hover, tap or focus a bar to declassify it."
         stamp="Redacted"
