@@ -1,21 +1,27 @@
 <script setup lang="ts">
 import Board from './shell/Board.vue'
+import Clock from './shell/Clock.vue'
 import ThemeToggle from './shell/ThemeToggle.vue'
+import Typewriter from './shell/Typewriter.vue'
 </script>
 
 <template>
   <div class="mx-auto flex min-h-screen max-w-6xl flex-col px-4 py-8 sm:px-8 sm:py-12">
-    <header class="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+    <header class="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
       <div>
-        <p class="text-[11px] tracking-[0.18em] text-signal uppercase">
-          Case file № 001 · Status: open
+        <p class="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] tracking-[0.18em] uppercase">
+          <span class="text-signal">Case file № 001</span>
+          <span class="text-muted">Status: open</span>
+          <span class="text-muted">Clearance: public</span>
+          <Clock class="text-muted" />
         </p>
         <h1 class="mt-3 font-serif text-6xl leading-[0.95] sm:text-8xl">
           What you see<span class="text-signal italic">?</span>
         </h1>
-        <p class="mt-4 max-w-xl font-serif text-xl text-muted italic sm:text-2xl">
-          Everything is live. Nothing is a coincidence.
-        </p>
+        <Typewriter
+          class="mt-4 block max-w-xl font-serif text-xl text-muted italic sm:text-2xl"
+          text="Everything is live. Nothing is a coincidence."
+        />
       </div>
       <ThemeToggle />
     </header>
