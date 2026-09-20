@@ -2,6 +2,9 @@
 
 > Everything is live. Nothing is a coincidence.
 
+**[Live demo](https://degradance.github.io/what-you-see/)** ·
+[![CI](https://github.com/degradance/what-you-see/actions/workflows/ci.yml/badge.svg)](https://github.com/degradance/what-you-see/actions/workflows/ci.yml)
+
 A live dashboard of public data feeds, framed as a conspiracy evidence board.
 **All data is public and real. All connections are made up.**
 
