@@ -1,8 +1,12 @@
 <script setup lang="ts">
+import { caseNumber } from '@/core/case-number'
 import Board from './shell/Board.vue'
 import Clock from './shell/Clock.vue'
 import ThemeToggle from './shell/ThemeToggle.vue'
 import Typewriter from './shell/Typewriter.vue'
+
+// Every visit opens a different case; the number is drawn once, so it never changes under the reader.
+const fileNumber = caseNumber()
 </script>
 
 <template>
@@ -10,7 +14,7 @@ import Typewriter from './shell/Typewriter.vue'
     <header class="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
       <div>
         <p class="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] tracking-[0.18em] uppercase">
-          <span class="text-signal">Case file № 001</span>
+          <span class="text-signal">Case file № {{ fileNumber }}</span>
           <span class="text-muted">Status: open</span>
           <span class="text-muted">Clearance: public</span>
           <Clock class="text-muted" />
