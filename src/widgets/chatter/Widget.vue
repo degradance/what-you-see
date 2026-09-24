@@ -36,11 +36,11 @@ onBeforeUnmount(() => stopPolling?.())
 <template>
   <div class="flex flex-1 flex-col gap-4">
     <div class="flex items-end gap-4">
-      <p class="font-serif text-7xl leading-none text-ink">
+      <p class="metric text-ink">
         {{ stories.length > 0 ? total.toLocaleString('en-US') : '—' }}
       </p>
       <div class="min-w-0 pb-1">
-        <p class="text-[10px] tracking-[0.18em] text-muted uppercase">comments · top {{ stories.length || 'stories' }}</p>
+        <p class="caption text-muted">comments · top {{ stories.length || 'stories' }}</p>
         <p v-if="loudest" class="mt-1 text-xs text-muted">Loudest thread: {{ loudest.comments.toLocaleString('en-US') }}.</p>
       </div>
     </div>

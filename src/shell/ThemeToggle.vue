@@ -14,7 +14,7 @@ const isDark = computed(() => theme.value === 'dark')
     :aria-checked="!isDark"
     aria-label="Declassified mode"
     :title="isDark ? 'Redacted · switch to Declassified' : 'Declassified · switch to Redacted'"
-    class="inline-flex h-8 shrink-0 cursor-pointer items-center gap-3 rounded-full border border-line bg-canvas px-3 text-[11px] tracking-[0.18em] text-signal uppercase transition-colors hover:border-signal focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal motion-reduce:transition-none"
+    class="inline-flex h-8 shrink-0 cursor-pointer items-center gap-3 rounded-full border border-line bg-canvas px-3 label text-signal transition-colors hover:border-signal focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal motion-reduce:transition-none"
     @click="toggle"
   >
     <span class="hidden sm:inline" aria-hidden="true">{{ isDark ? 'Redacted' : 'Declassified' }}</span>

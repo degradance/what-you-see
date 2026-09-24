@@ -30,7 +30,7 @@ const PerfHud = defineAsyncComponent(() => whenIdle().then(() => import('./hud/P
   <!-- Solid, not frosted: a backdrop blur repaints everything under the bar on every scrolled frame. -->
   <div class="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface sm:top-0 sm:bottom-auto sm:border-t-0 sm:border-b">
     <div class="mx-auto flex h-12 max-w-6xl items-center gap-2 px-2 sm:gap-4 sm:px-8">
-      <span class="hidden text-[11px] tracking-[0.18em] whitespace-nowrap text-signal uppercase lg:inline">
+      <span class="hidden label whitespace-nowrap text-signal lg:inline">
         № {{ fileNumber }}
       </span>
       <!-- The list takes the free width and keeps its items at the start, so the panel arriving later moves nothing. -->
@@ -41,7 +41,7 @@ const PerfHud = defineAsyncComponent(() => whenIdle().then(() => import('./hud/P
               :href="`#${e.id}`"
               :aria-current="active === e.id ? 'location' : undefined"
               :aria-label="`Exhibit ${e.letter}: ${e.short}`"
-              class="flex h-full items-center gap-1.5 border-b-2 px-2.5 text-[11px] tracking-[0.18em] uppercase transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-signal motion-reduce:transition-none sm:px-2"
+              class="flex h-full items-center gap-1.5 border-b-2 px-2.5 label transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-signal motion-reduce:transition-none sm:px-2"
               :class="active === e.id ? 'border-signal text-signal' : 'border-transparent text-muted hover:text-ink'"
             >
               <span class="font-semibold">{{ e.letter }}</span>

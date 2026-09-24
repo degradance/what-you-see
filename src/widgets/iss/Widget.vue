@@ -146,10 +146,10 @@ onBeforeUnmount(() => {
   <div class="flex flex-col gap-4 @xl:grid @xl:grid-cols-2 @xl:grid-rows-[auto_auto_1fr] @xl:items-start @xl:gap-x-8">
     <div class="@xl:col-start-2">
       <div>
-        <p class="font-serif text-7xl leading-none text-ink">
+        <p class="metric text-ink">
           {{ position ? formatKm(position.speedKmh) : '—' }}
         </p>
-        <p class="mt-2 text-xs tracking-[0.18em] text-muted uppercase">km/h · orbital speed</p>
+        <p class="mt-2 caption text-muted">km/h · orbital speed</p>
       </div>
     </div>
 
@@ -168,19 +168,19 @@ onBeforeUnmount(() => {
 
     <dl v-if="position" class="divide-y divide-line border-y border-line text-xs @xl:col-start-2">
       <div class="flex items-baseline justify-between gap-3 py-1.5">
-        <dt class="text-[10px] tracking-[0.18em] text-muted uppercase">Latitude</dt>
+        <dt class="label-micro text-muted">Latitude</dt>
         <dd>{{ formatLat(position.lat) }}</dd>
       </div>
       <div class="flex items-baseline justify-between gap-3 py-1.5">
-        <dt class="text-[10px] tracking-[0.18em] text-muted uppercase">Longitude</dt>
+        <dt class="label-micro text-muted">Longitude</dt>
         <dd>{{ formatLon(position.lon) }}</dd>
       </div>
       <div class="flex items-baseline justify-between gap-3 py-1.5">
-        <dt class="text-[10px] tracking-[0.18em] text-muted uppercase">Altitude</dt>
+        <dt class="label-micro text-muted">Altitude</dt>
         <dd>{{ formatKm(position.altitudeKm) }} km</dd>
       </div>
       <div class="flex items-baseline justify-between gap-3 py-1.5">
-        <dt class="text-[10px] tracking-[0.18em] text-muted uppercase">Sunlight</dt>
+        <dt class="label-micro text-muted">Sunlight</dt>
         <dd>{{ position.visibility }}</dd>
       </div>
     </dl>

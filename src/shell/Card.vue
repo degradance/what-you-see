@@ -15,10 +15,10 @@ defineProps<{
 <template>
   <article :id="`exhibit-${exhibit.toLowerCase()}`" :data-card-id="cardId" class="card relative flex min-w-0 flex-col border border-line bg-surface p-5 sm:p-6">
     <header class="flex items-start justify-between gap-4">
-      <p class="text-[11px] tracking-[0.18em] text-muted uppercase">Exhibit {{ exhibit }}</p>
+      <p class="label text-muted">Exhibit {{ exhibit }}</p>
       <p
         v-if="status"
-        class="flex items-center gap-2 text-[11px] tracking-[0.18em] uppercase"
+        class="flex items-center gap-2 label"
         :class="STATUS_TONE[status]"
         role="status"
       >

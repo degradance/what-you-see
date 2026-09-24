@@ -102,8 +102,8 @@ onBeforeUnmount(() => {
   <div class="flex flex-1 flex-col gap-4 @xl:grid @xl:grid-cols-2 @xl:grid-rows-[auto_auto_1fr] @xl:items-start @xl:gap-x-8">
     <div class="@xl:col-start-2">
       <div>
-        <p class="font-serif text-7xl leading-none text-ink">{{ quakes.length }}</p>
-        <p class="mt-2 text-xs tracking-[0.18em] text-muted uppercase">events · past 24 h</p>
+        <p class="metric text-ink">{{ quakes.length }}</p>
+        <p class="mt-2 caption text-muted">events · past 24 h</p>
       </div>
     </div>
 
@@ -131,7 +131,7 @@ onBeforeUnmount(() => {
       >
         <span class="w-9 shrink-0 text-ink">M {{ quake.mag.toFixed(1) }}</span>
         <span class="min-w-0 flex-1 truncate">{{ quake.place }}</span>
-        <span class="shrink-0 text-[10px] tracking-[0.18em] text-muted uppercase">
+        <span class="shrink-0 label-micro text-muted">
           {{ formatAgo(quake.time, now) }}
         </span>
       </li>

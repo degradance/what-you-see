@@ -52,6 +52,36 @@
   --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 }
 
+/* The named type styles of the design system. Size, tracking and case travel together, so a copy cannot drift apart. */
+@utility label {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* Row tags and data terms, where a label would crowd the value beside it. */
+@utility label-micro {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* The unit under a metric and the one-line load states: a label at reading size. */
+@utility caption {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* Tabular figures keep a ticking number from shifting its caption sideways. */
+@utility metric {
+  font-family: var(--font-serif);
+  font-size: 4.5rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
 @layer base {
   html {
     background: var(--canvas);

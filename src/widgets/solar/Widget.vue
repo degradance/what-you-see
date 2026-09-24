@@ -62,10 +62,10 @@ onBeforeUnmount(() => stopPolling?.())
   <div class="flex flex-col gap-5">
     <div class="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
       <div>
-        <p class="font-serif text-7xl leading-none" :class="level ? TEXT_TONE[level] : 'text-ink'">
+        <p class="metric" :class="level ? TEXT_TONE[level] : 'text-ink'">
           {{ summary ? formatKp(summary.latest.kp) : '—' }}
         </p>
-        <p class="mt-2 text-xs tracking-[0.18em] text-muted uppercase">
+        <p class="mt-2 caption text-muted">
           Kp index · {{ level ? LEVEL_LABEL[level] : 'no signal' }}
         </p>
       </div>
@@ -99,7 +99,7 @@ onBeforeUnmount(() => stopPolling?.())
             </rect>
           </svg>
           <span
-            class="absolute right-0 -translate-y-full bg-surface pl-2 text-[10px] tracking-[0.18em] text-muted uppercase"
+            class="absolute right-0 -translate-y-full bg-surface pl-2 label-micro text-muted"
             :style="{ top: `${(chart.stormY / chart.height) * 100}%` }"
           >
             Storm · Kp 5
@@ -114,15 +114,15 @@ onBeforeUnmount(() => stopPolling?.())
 
       <dl class="grid divide-y divide-line border-y border-line text-xs @xl:grid-cols-3 @xl:divide-x @xl:divide-y-0">
         <div class="flex items-baseline justify-between gap-3 py-1.5 @xl:flex-col @xl:items-start @xl:gap-1 @xl:px-4 @xl:first:pl-0">
-          <dt class="text-[10px] tracking-[0.18em] text-muted uppercase">Latest reading</dt>
+          <dt class="label-micro text-muted">Latest reading</dt>
           <dd>{{ formatWhen(summary.latest.time) }}</dd>
         </div>
         <div class="flex items-baseline justify-between gap-3 py-1.5 @xl:flex-col @xl:items-start @xl:gap-1 @xl:px-4">
-          <dt class="text-[10px] tracking-[0.18em] text-muted uppercase">Peak this week</dt>
+          <dt class="label-micro text-muted">Peak this week</dt>
           <dd>Kp {{ formatKp(summary.peak.kp) }} · {{ formatWhen(summary.peak.time) }}</dd>
         </div>
         <div class="flex items-baseline justify-between gap-3 py-1.5 @xl:flex-col @xl:items-start @xl:gap-1 @xl:px-4">
-          <dt class="text-[10px] tracking-[0.18em] text-muted uppercase">Storm readings</dt>
+          <dt class="label-micro text-muted">Storm readings</dt>
           <dd>{{ summary.stormReadings }} of {{ samples?.length }}</dd>
         </div>
       </dl>

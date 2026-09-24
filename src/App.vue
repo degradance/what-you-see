@@ -20,7 +20,7 @@ const fileNumber = caseNumber()
   <div class="mx-auto flex min-h-screen max-w-6xl flex-col px-4 pt-8 pb-20 sm:px-8 sm:pt-24 sm:pb-12">
     <header>
       <div>
-        <p class="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] tracking-[0.18em] uppercase">
+        <p class="flex flex-wrap items-center gap-x-4 gap-y-1 label">
           <span class="text-signal">Case file № {{ fileNumber }}</span>
           <span class="text-muted">Status: open</span>
           <span class="text-muted">Clearance: public</span>

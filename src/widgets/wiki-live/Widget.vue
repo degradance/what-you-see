@@ -67,8 +67,8 @@ onBeforeUnmount(() => {
   <div class="flex flex-col gap-5">
     <div>
       <div>
-        <p class="font-serif text-7xl leading-none text-ink">{{ total.toFixed(1) }}</p>
-        <p class="mt-2 text-xs tracking-[0.18em] text-muted uppercase">
+        <p class="metric text-ink">{{ total.toFixed(1) }}</p>
+        <p class="mt-2 caption text-muted">
           edits per second · {{ RATE_WINDOW_S }} s average
         </p>
       </div>
@@ -88,7 +88,7 @@ onBeforeUnmount(() => {
       <li v-for="change in feed" :key="change.meta.id" class="flex items-baseline gap-3 py-1.5">
         <span class="w-36 shrink-0 truncate text-muted">{{ change.meta.domain }}</span>
         <span class="min-w-0 flex-1 truncate">{{ change.title }}</span>
-        <span class="shrink-0 text-[10px] tracking-[0.18em] text-muted uppercase">
+        <span class="shrink-0 label-micro text-muted">
           {{ change.type === 'new' ? 'new' : change.bot ? 'bot' : 'edit' }}
         </span>
       </li>
