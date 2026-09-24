@@ -86,7 +86,7 @@ function streamStats(
 }
 
 const RATE_LABEL: Record<ReplayRate, string> = { 0: 'Live', 1: '×1', 10: '×10', 100: '×100', 1000: '×1000' }
-const MODE_LABEL: Record<PipelineMode, string> = { main: 'Main thread', worker: 'Worker' }
+const MODE_LABEL: Record<PipelineMode, string> = { naive: 'Each message', main: 'Batched', worker: 'Worker' }
 const CHOICE =
   'h-8 flex-1 cursor-pointer rounded-full border px-2 label transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal motion-reduce:transition-none'
 const choiceTone = (on: boolean) => (on ? 'border-signal text-signal' : 'border-line text-muted hover:text-ink')
@@ -240,7 +240,7 @@ const vitalTone = (name: VitalName) => {
             {{ RATE_LABEL[option] }}
           </button>
         </div>
-        <p id="perf-hud-mode" class="mt-4 text-xs">Hire an intern <span class="text-muted">· where messages are parsed</span></p>
+        <p id="perf-hud-mode" class="mt-4 text-xs">How Exhibit A listens <span class="text-muted">· render, batch, delegate</span></p>
         <div class="mt-2 flex gap-2" role="group" aria-labelledby="perf-hud-mode">
           <button
             v-for="option in PIPELINE_MODES"
@@ -254,8 +254,8 @@ const vitalTone = (name: VitalName) => {
           </button>
         </div>
         <p class="mt-2 text-[11px] text-muted">
-          A recorded minute of the Wikipedia stream, played through the same code as the live one, on the page's main
-          thread or in a Web Worker.
+          A recorded minute of the Wikipedia stream, played through the same code as the live one. "Each message"
+          updates the page for every message; "Batched" four times a second; "Worker" also parses off the main thread.
         </p>
       </div>
 

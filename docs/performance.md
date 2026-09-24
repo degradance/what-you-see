@@ -211,3 +211,40 @@ three times cheaper than it is. Worker numbers are quoted without throttling.
   that was harmless; in the worker, which has no `document`, it threw on the first pause.
 - The live feed showed titles of user and user-talk pages, which are editor names ("User talk:…" in any language).
   The schema now reads the page's namespace and withholds those titles; the edits still count towards the rates.
+
+## 5 · Batching, measured: every message against a 250 ms flush
+
+The same `ChangePipeline`, with one variable changed: "Each message" applies a snapshot to the reactive state after
+every message, the way a first version usually does; "Batched" applies it four times a second, which is how the board
+runs. Both run on the main thread. Two runs per cell.
+
+Main-thread busy time, ms per second (phone viewport):
+
+| Rate | Messages | Each message, 4× CPU | Batched, 4× CPU | Each message, no slowdown | Batched, no slowdown |
+|---|---|---|---|---|---|
+| Live | 30–50 /s | 96 | 72 | 97 | 109 |
+| ×10 | 400 /s | **136** | **47** | 141 | 85 |
+| ×100 | 4,790 /s | **149** | **43** | 146 | 91 |
+| ×1000 | 47,300 /s | **374** | **242** | 224 | 228 |
+
+Layout alone, at ×10 and ×100: 34–42 ms/s for "Each message" against 6–12 ms/s batched.
+
+Batching cuts the main thread's work to about a third from a few hundred messages a second. The gap is smaller than the
+message rate suggests, because two things already batch on the naive path: Vue re-renders once per task, not once per
+assignment, and the browser lays out and paints once per frame, not once per render. The naive version therefore
+renders at most once per replay tick or per network message, about 50 times a second, where the batched one renders 4
+times. No run produced a long animation frame, and the board held 60 fps throughout: at these sizes the cost shows up
+as busy time and battery, not as jank. The unthrottled column is noisier at low rates, where the live stream's own
+variation is larger than the difference.
+
+### All three, side by side
+
+Main-thread busy time at 4× CPU slowdown, ms per second:
+
+| Rate | Each message | Batched | Batched in a worker |
+|---|---|---|---|
+| ×100 | 149 | 43 | 33 |
+| ×1000 | 374 | 242 | 30 |
+
+Batching is the step that matters at every rate above live; the worker is the step that matters when parsing itself
+becomes the load.

@@ -26,8 +26,9 @@ export const replayRate = rate.get
 export const setReplayRate = rate.set
 export const onReplayRate = rate.on
 
-// Where a stream's messages are parsed and stored: on the main thread, or in a Web Worker that posts the result.
-export const PIPELINE_MODES = ['main', 'worker'] as const
+// How a stream reaches the page. `naive` updates reactive state on every message, the way a first version would;
+// `main` batches that into a flush four times a second; `worker` also moves parsing off the main thread.
+export const PIPELINE_MODES = ['naive', 'main', 'worker'] as const
 export type PipelineMode = (typeof PIPELINE_MODES)[number]
 
 const mode = setting<PipelineMode>('main')

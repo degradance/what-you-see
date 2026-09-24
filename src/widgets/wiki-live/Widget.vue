@@ -38,15 +38,20 @@ function apply(snapshot: Snapshot) {
 
 const onStatus = (status: StreamStatus) => emit('status', status)
 
-// Hot path on the main thread: plain objects, no reactivity until the flush.
-function runOnMain(rate: number): () => void {
+// Hot path on the main thread: plain objects, no reactivity until the flush. With `everyMessage` the flush runs
+// after each message instead: the comparison the panel offers, not a way the board should run.
+function runOnMain(rate: number, everyMessage = false): () => void {
   const pipeline = new ChangePipeline()
   const dispose = sourceFor(rate, true)({
     parse: parseChange,
-    onMessage: (change) => pipeline.add(change, Date.now()),
+    onMessage: (change) => {
+      const now = Date.now()
+      pipeline.add(change, now)
+      if (everyMessage) apply(pipeline.snapshot(now))
+    },
     onStatus,
   })
-  const timer = setInterval(() => apply(pipeline.snapshot(Date.now())), FLUSH_MS)
+  const timer = everyMessage ? undefined : setInterval(() => apply(pipeline.snapshot(Date.now())), FLUSH_MS)
   return () => {
     dispose()
     clearInterval(timer)
@@ -82,7 +87,8 @@ const stops: (() => void)[] = []
 
 function connect() {
   dispose?.()
-  dispose = pipelineMode() === 'worker' ? runInWorker(replayRate()) : runOnMain(replayRate())
+  const mode = pipelineMode()
+  dispose = mode === 'worker' ? runInWorker(replayRate()) : runOnMain(replayRate(), mode === 'naive')
 }
 
 onMounted(() => {
