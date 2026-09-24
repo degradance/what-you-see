@@ -1,23 +1,11 @@
 import { nextDelay } from '../backoff'
+import { deliver, type Source } from './source'
 
-export type StreamStatus = 'connecting' | 'live' | 'reconnecting' | 'paused'
+// `replay` is a recording played back by the load generator: the card must not call it live.
+export type StreamStatus = 'connecting' | 'live' | 'replay' | 'reconnecting' | 'paused'
 
-export interface SseOptions<T> {
-  url: string
-  // Returns `null` to drop a message; must not throw.
-  parse: (data: string) => T | null
-  onMessage: (value: T) => void
-  onStatus?: (status: StreamStatus) => void
-  pauseWhenHidden?: boolean
-}
-
-export function connectSSE<T>({
-  url,
-  parse,
-  onMessage,
-  onStatus,
-  pauseWhenHidden = true,
-}: SseOptions<T>): () => void {
+export const sseSource = (url: string, pauseWhenHidden = true): Source => (handlers) => {
+  const { onStatus } = handlers
   let source: EventSource | null = null
   let timer: ReturnType<typeof setTimeout> | undefined
   let attempt = 0
@@ -37,10 +25,7 @@ export function connectSSE<T>({
       attempt = 0
       onStatus?.('live')
     }
-    source.onmessage = (event: MessageEvent<string>) => {
-      const value = parse(event.data)
-      if (value !== null) onMessage(value)
-    }
+    source.onmessage = (event: MessageEvent<string>) => deliver(event.data, handlers)
     source.onerror = () => {
       // EventSource gives up on some failures; take over so backoff applies to all of them.
       close()

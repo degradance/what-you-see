@@ -5,3 +5,6 @@ export const formatMs = (ms: number): string =>
 export const formatKB = (bytes: number): string => `${(bytes / 1000).toFixed(bytes < 10_000 ? 1 : 0)} KB`
 
 export const formatCls = (value: number): string => value.toFixed(2)
+
+// Per-message costs are fractions of a millisecond; microseconds keep them readable.
+export const formatUs = (ms: number): string => `${Math.round(ms * 1000)} µs`

@@ -119,3 +119,43 @@ can differ by a line or two; from `lg` its row sets the height.
 
 The five skeletons cost 1.9 KB in the eager chunk and about 30 ms of first paint on the throttled phone; the shell stays
 under its 50 KB budget.
+
+## Load generator
+
+Exhibit A reads its messages from a `Source` (`core/streams/source.ts`): the live Server-Sent Events stream, or a
+recording played back at a multiple of real time. Both hand raw message strings to the same pipeline (`JSON.parse`,
+the valibot schema, the ring buffer and rate counters), and `deliver()` times that pipeline for every message. The
+panel's "Turn up the chatter" control switches between them; the card says "Replay" instead of "Live" while it plays.
+
+The recording (`scripts/record-wikimedia.mjs`, 60 s, 2,841 messages, 47 per second) keeps every message the stream
+sent, including the ~70 % the widget rejects (logs, categorisation), because rejecting them costs a parse too. Each
+message is rebuilt at its original size, a median of 1.2 KB, with filler standing in for the fields left out, so
+`JSON.parse` does the same work. Titles of user and user-talk pages are not stored: they are editor names. The file is a
+lazy chunk of 33 KB gzip that only a visitor who turns the load up downloads.
+
+### Pipeline cost by rate · 2026-09-24
+
+Phone viewport, CPU slowed 4×, 10 s per rate after 3 s to settle. "Pipeline" is what `deliver()` measured; the other
+columns are DevTools counters for the whole page.
+
+| Rate | Messages | Pipeline | Script | Layout | Main thread busy | Long frames |
+|---|---|---|---|---|---|---|
+| Live | 23–29 /s | 0.1–0.2 ms/s | 2.2 ms/s | 10.5 ms/s | 58–69 ms/s | 0 |
+| ×1 | 64 /s | 0.1–0.3 ms/s | 1.5 ms/s | 11.0 ms/s | 53–59 ms/s | 0 |
+| ×10 | 397 /s | 0.9 ms/s | 2.4 ms/s | 8.2 ms/s | 41–45 ms/s | 0 |
+| ×100 | 4,738 /s | 9–11 ms/s | 11–14 ms/s | 5.6 ms/s | 38–43 ms/s | 0 |
+
+At ×100 the pipeline costs about 2 µs a message and about 1 % of a slowed CPU; the panel's own figure and the DevTools
+script counter agree. The cost that does not grow with the rate is rendering: the widget touches reactive state on a
+250 ms flush, so the DOM changes four times a second at any rate. The live stream costs more layout than the replay at
+the same rate because real headlines vary more in length than the rows they replace.
+
+`performance.now()` is coarsened to about 0.1 ms in a page that is not cross-origin isolated, so single messages mostly
+read as 0 or 0.1 ms. Summed over thousands of messages the error averages out, which the match with the DevTools counter
+confirms.
+
+### Found on the way
+
+The panel moved when a late chunk loaded: its value column was sized by content, so "76 KB" becoming "109 KB" widened
+it, rewrapped a label and moved the panel's top edge (0.19 CLS on a phone, where the panel is anchored to the bottom).
+The column now has a fixed width.

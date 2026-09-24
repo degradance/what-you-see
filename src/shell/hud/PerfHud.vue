@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
-import { formatCls, formatKB, formatMs } from '@/core/perf/format'
+import { formatCls, formatKB, formatMs, formatUs } from '@/core/perf/format'
 import { FrameMeter } from '@/core/perf/frames'
+import { streamMeter } from '@/core/perf/stream'
 import { summarizeResources, type ResourceLike, type ResourceTotals } from '@/core/perf/resources'
 import { watchLongFrames, watchResources, watchVitals, type Rating, type Vital, type VitalName } from '@/core/perf/vitals'
+import { REPLAY_RATES, onReplayRate, replayRate, setReplayRate, type ReplayRate } from '@/core/streams/load'
 
 interface Snapshot {
   vitals: Partial<Record<VitalName, Vital>>
@@ -12,6 +14,7 @@ interface Snapshot {
   stalls: number
   resources: ResourceTotals
   costMsPerS?: number
+  stream?: { perS: number; msPerS: number; msPerEvent: number }
 }
 
 // Observers and frames write into plain objects; the template sees one snapshot per second.
@@ -27,6 +30,7 @@ const stops: (() => void)[] = []
 
 const snapshot = shallowRef<Snapshot>({ vitals: {}, stalls: 0, resources: summarizeResources([]) })
 const open = ref(false)
+const rate = ref<ReplayRate>(replayRate())
 const root = ref<HTMLElement>()
 
 // Its own work is timed too, so the panel can say what watching costs.
@@ -54,10 +58,18 @@ const flush = timed(() => {
     stalls,
     resources: summarizeResources(entries),
     costMsPerS: (costMs * 1000) / (now - costSince),
+    stream: streamStats(streamMeter.take(), now - costSince),
   }
   costMs = 0
   costSince = now
 })
+
+function streamStats({ events, ms }: { events: number; ms: number }, windowMs: number): Snapshot['stream'] {
+  if (events === 0) return undefined
+  return { perS: (events * 1000) / windowMs, msPerS: (ms * 1000) / windowMs, msPerEvent: ms / events }
+}
+
+const RATE_LABEL: Record<ReplayRate, string> = { 0: 'Live', 1: '×1', 10: '×10', 100: '×100' }
 
 function onVisibility() {
   if (document.hidden) {
@@ -84,6 +96,7 @@ onMounted(() => {
   timer = setInterval(flush, 1000)
   document.addEventListener('visibilitychange', onVisibility)
   document.addEventListener('pointerdown', onPointerDown)
+  stops.push(onReplayRate((next) => (rate.value = next)))
 })
 
 onBeforeUnmount(() => {
@@ -141,7 +154,8 @@ const vitalTone = (name: VitalName) => {
       <h2 id="perf-hud-title" class="font-serif text-2xl leading-tight">Who watches the watchers</h2>
       <p class="mt-1 text-xs text-muted">This page, measured live in your browser. Nothing is sent anywhere.</p>
 
-      <dl class="mt-4 grid grid-cols-[1fr_auto] gap-x-4 gap-y-2 text-xs tabular-nums">
+      <!-- A fixed value column: an auto one widens when a late chunk adds a digit, rewraps the labels and moves the panel. -->
+      <dl class="mt-4 grid grid-cols-[1fr_18ch] gap-x-4 gap-y-2 text-xs tabular-nums">
         <dt>Time to first evidence <span class="text-muted">· LCP</span></dt>
         <dd :class="vitalTone('LCP')">{{ vitalText('LCP') ?? lcpMissing() }}</dd>
 
@@ -170,11 +184,41 @@ const vitalTone = (name: VitalName) => {
           {{ formatKB(snapshot.resources.fonts.bytes) }} <span class="text-muted">· {{ snapshot.resources.fonts.files }} files</span>
         </dd>
 
+        <!-- Short values on their own rows, so each fits the value column. -->
+        <dt class="mt-2 border-t border-line pt-2">Rumour mill <span class="text-muted">· messages</span></dt>
+        <dd class="mt-2 border-t border-line pt-2">{{ snapshot.stream ? `${Math.round(snapshot.stream.perS)}/s` : '…' }}</dd>
+
+        <dt>Cost of listening <span class="text-muted">· main thread</span></dt>
+        <dd>{{ snapshot.stream ? `${formatMs(snapshot.stream.msPerS)}/s` : '…' }}</dd>
+
+        <dt>Per message <span class="text-muted">· parse and store</span></dt>
+        <dd>{{ snapshot.stream ? formatUs(snapshot.stream.msPerEvent) : '…' }}</dd>
+
         <dt class="mt-2 border-t border-line pt-2">Cost of watching <span class="text-muted">· this panel</span></dt>
         <dd class="mt-2 border-t border-line pt-2">
           {{ snapshot.costMsPerS !== undefined ? `${formatMs(snapshot.costMsPerS)}/s` : '…' }}
         </dd>
       </dl>
+
+      <div class="mt-4 border-t border-line pt-4">
+        <p id="perf-hud-load" class="text-xs">Turn up the chatter <span class="text-muted">· replay Exhibit A</span></p>
+        <div class="mt-2 flex gap-2" role="group" aria-labelledby="perf-hud-load">
+          <button
+            v-for="option in REPLAY_RATES"
+            :key="option"
+            type="button"
+            :aria-pressed="rate === option"
+            class="h-8 flex-1 cursor-pointer rounded-full border px-2 label transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal motion-reduce:transition-none"
+            :class="rate === option ? 'border-signal text-signal' : 'border-line text-muted hover:text-ink'"
+            @click="setReplayRate(option)"
+          >
+            {{ RATE_LABEL[option] }}
+          </button>
+        </div>
+        <p class="mt-2 text-[11px] text-muted">
+          A recorded minute of the Wikipedia stream, played through the same code as the live one.
+        </p>
+      </div>
 
       <p class="mt-4 text-[11px] text-muted">
         Sizes are compressed bytes of this site's own files. Idle, the frame rate is your screen's refresh rate.

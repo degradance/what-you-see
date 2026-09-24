@@ -2,8 +2,11 @@
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
 import { RateCounter } from '@/core/rate-counter'
 import { RingBuffer } from '@/core/ring-buffer'
-import { connectSSE, type StreamStatus } from '@/core/streams/sse'
+import { onReplayRate, replayRate, type ReplayRate } from '@/core/streams/load'
+import { replaySource } from '@/core/streams/replay'
+import { sseSource, type StreamStatus } from '@/core/streams/sse'
 import { FEED_SIZE, RATE_WINDOW_S } from './layout'
+import { toRecording, type RecordedStream } from './recording'
 import { parseChange, type Change } from './schema'
 import Skeleton from './Skeleton.vue'
 
@@ -14,8 +17,8 @@ const STREAM_URL = 'https://stream.wikimedia.org/v2/stream/recentchange'
 const FLUSH_MS = 250
 
 // Hot path: plain objects, no reactivity. Reactive state is only touched from `flush`.
-const humanRate = new RateCounter(RATE_WINDOW_S)
-const botRate = new RateCounter(RATE_WINDOW_S)
+let humanRate = new RateCounter(RATE_WINDOW_S)
+let botRate = new RateCounter(RATE_WINDOW_S)
 const latest = new RingBuffer<Change>(FEED_SIZE)
 let dirty = false
 
@@ -49,20 +52,32 @@ function flush() {
   }
 }
 
+// The recording is its own chunk: only a visitor who turns the load up downloads it. It is built by our own
+// script and bundled, not fetched, so it is typed rather than validated; JSON imports widen tuples to arrays.
+const loadRecording = () =>
+  import('./recording.json').then((m) => toRecording(m.default as unknown as RecordedStream))
+
 let dispose: (() => void) | undefined
 let flushTimer: ReturnType<typeof setInterval> | undefined
+let stopFollowing: (() => void) | undefined
+
+function connect(rate: ReplayRate) {
+  dispose?.()
+  // A fresh average per source: a rate that mixes live seconds with ×100 seconds describes neither.
+  humanRate = new RateCounter(RATE_WINDOW_S)
+  botRate = new RateCounter(RATE_WINDOW_S)
+  const source = rate === 0 ? sseSource(STREAM_URL) : replaySource(loadRecording, rate)
+  dispose = source({ parse: parseChange, onMessage: onChange, onStatus: (s) => emit('status', s) })
+}
 
 onMounted(() => {
-  dispose = connectSSE({
-    url: STREAM_URL,
-    parse: parseChange,
-    onMessage: onChange,
-    onStatus: (s) => emit('status', s),
-  })
+  connect(replayRate())
+  stopFollowing = onReplayRate(connect)
   flushTimer = setInterval(flush, FLUSH_MS)
 })
 
 onBeforeUnmount(() => {
+  stopFollowing?.()
   dispose?.()
   clearInterval(flushTimer)
 })
