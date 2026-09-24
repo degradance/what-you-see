@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseChange } from './schema'
+import { parseChange, WITHHELD_TITLE } from './schema'
 
 const edit = {
   type: 'edit',
@@ -17,6 +17,13 @@ describe('parseChange', () => {
 
   it('drops the editor identity', () => {
     expect(parseChange(JSON.stringify(edit))).not.toHaveProperty('user')
+  })
+
+  it('withholds titles that are editor names, and still counts the edit', () => {
+    expect(parseChange(JSON.stringify({ ...edit, namespace: 3, title: 'User talk:Jane' }))?.title).toBe(WITHHELD_TITLE)
+    expect(parseChange(JSON.stringify({ ...edit, namespace: 2, title: 'Benutzer:Jane/Entwurf' }))?.title).toBe(WITHHELD_TITLE)
+    expect(parseChange(JSON.stringify({ ...edit, namespace: 0 }))?.title).toBe('Fuli, Yangshuo County')
+    expect(parseChange(JSON.stringify({ ...edit, namespace: 0 }))).not.toHaveProperty('namespace')
   })
 
   it('drops event types we do not show', () => {

@@ -1,26 +1,17 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
-import { RateCounter } from '@/core/rate-counter'
-import { RingBuffer } from '@/core/ring-buffer'
-import { onReplayRate, replayRate, type ReplayRate } from '@/core/streams/load'
-import { replaySource } from '@/core/streams/replay'
-import { sseSource, type StreamStatus } from '@/core/streams/sse'
+import { streamMeter } from '@/core/perf/stream'
+import { onPipelineMode, onReplayRate, pipelineMode, replayRate } from '@/core/streams/load'
+import type { StreamStatus } from '@/core/streams/sse'
 import { FEED_SIZE, RATE_WINDOW_S } from './layout'
-import { toRecording, type RecordedStream } from './recording'
+import { ChangePipeline, sourceFor, type FromWorker, type Snapshot, type ToWorker } from './pipeline'
 import { parseChange, type Change } from './schema'
 import Skeleton from './Skeleton.vue'
 
 // The card header shows the connection state, so the widget only reports it.
 const emit = defineEmits<{ status: [status: StreamStatus] }>()
 
-const STREAM_URL = 'https://stream.wikimedia.org/v2/stream/recentchange'
 const FLUSH_MS = 250
-
-// Hot path: plain objects, no reactivity. Reactive state is only touched from `flush`.
-let humanRate = new RateCounter(RATE_WINDOW_S)
-let botRate = new RateCounter(RATE_WINDOW_S)
-const latest = new RingBuffer<Change>(FEED_SIZE)
-let dirty = false
 
 const feed = shallowRef<Change[]>([])
 const ready = ref(false)
@@ -35,51 +26,73 @@ const botShare = computed(() =>
   total.value > 0 ? Math.round((botsPerSec.value / total.value) * 100) : 0,
 )
 
-function onChange(change: Change) {
-  ;(change.bot ? botRate : humanRate).add(Date.now())
-  latest.push(change)
-  dirty = true
-}
-
-function flush() {
-  const now = Date.now()
-  humansPerSec.value = humanRate.perSecond(now)
-  botsPerSec.value = botRate.perSecond(now)
-  if (dirty) {
-    feed.value = latest.latest()
+// The only place reactive state is touched, four times a second, whichever thread did the work.
+function apply(snapshot: Snapshot) {
+  humansPerSec.value = snapshot.humansPerSec
+  botsPerSec.value = snapshot.botsPerSec
+  if (snapshot.feed) {
+    feed.value = snapshot.feed
     ready.value = true
-    dirty = false
   }
 }
 
-// The recording is its own chunk: only a visitor who turns the load up downloads it. It is built by our own
-// script and bundled, not fetched, so it is typed rather than validated; JSON imports widen tuples to arrays.
-const loadRecording = () =>
-  import('./recording.json').then((m) => toRecording(m.default as unknown as RecordedStream))
+const onStatus = (status: StreamStatus) => emit('status', status)
+
+// Hot path on the main thread: plain objects, no reactivity until the flush.
+function runOnMain(rate: number): () => void {
+  const pipeline = new ChangePipeline()
+  const dispose = sourceFor(rate, true)({
+    parse: parseChange,
+    onMessage: (change) => pipeline.add(change, Date.now()),
+    onStatus,
+  })
+  const timer = setInterval(() => apply(pipeline.snapshot(Date.now())), FLUSH_MS)
+  return () => {
+    dispose()
+    clearInterval(timer)
+  }
+}
+
+// The same pipeline in a worker. A worker has no document, so the page pauses it when the tab is hidden.
+function runInWorker(rate: number): () => void {
+  const worker = new Worker(new URL('./pipeline.worker.ts', import.meta.url), { type: 'module' })
+  const send = (message: ToWorker) => worker.postMessage(message)
+  worker.onmessage = ({ data }: MessageEvent<FromWorker>) => {
+    if (data.type === 'status') return onStatus(data.status)
+    streamMeter.addOffThread(data.events, data.ms)
+    apply(data.snapshot)
+  }
+  worker.onerror = () => onStatus('reconnecting')
+  const onVisibilityChange = () => {
+    if (!document.hidden) return send({ type: 'start', rate })
+    send({ type: 'pause' })
+    onStatus('paused')
+  }
+  document.addEventListener('visibilitychange', onVisibilityChange)
+  if (document.hidden) onStatus('paused')
+  else send({ type: 'start', rate })
+  return () => {
+    document.removeEventListener('visibilitychange', onVisibilityChange)
+    worker.terminate()
+  }
+}
 
 let dispose: (() => void) | undefined
-let flushTimer: ReturnType<typeof setInterval> | undefined
-let stopFollowing: (() => void) | undefined
+const stops: (() => void)[] = []
 
-function connect(rate: ReplayRate) {
+function connect() {
   dispose?.()
-  // A fresh average per source: a rate that mixes live seconds with ×100 seconds describes neither.
-  humanRate = new RateCounter(RATE_WINDOW_S)
-  botRate = new RateCounter(RATE_WINDOW_S)
-  const source = rate === 0 ? sseSource(STREAM_URL) : replaySource(loadRecording, rate)
-  dispose = source({ parse: parseChange, onMessage: onChange, onStatus: (s) => emit('status', s) })
+  dispose = pipelineMode() === 'worker' ? runInWorker(replayRate()) : runOnMain(replayRate())
 }
 
 onMounted(() => {
-  connect(replayRate())
-  stopFollowing = onReplayRate(connect)
-  flushTimer = setInterval(flush, FLUSH_MS)
+  connect()
+  stops.push(onReplayRate(connect), onPipelineMode(connect))
 })
 
 onBeforeUnmount(() => {
-  stopFollowing?.()
+  stops.forEach((stop) => stop())
   dispose?.()
-  clearInterval(flushTimer)
 })
 </script>
 

@@ -175,3 +175,39 @@ for moving the pipeline into a Web Worker: the metric that can move is main-thre
 span of a few microseconds is rarely paused. A synthetic `JSON.parse` loop of the same 1.2 KB message measured 1.17 µs
 per call unthrottled and 1.58 µs at "4× slower", not 4.7 µs. Per-message costs in this document are therefore quoted
 without throttling; the throttled profile is only used for totals over seconds.
+
+## 4 · The pipeline in a Web Worker
+
+Exhibit A's per-message work now lives in `ChangePipeline` (`widgets/wiki-live/pipeline.ts`), a class with no Vue in it.
+On the main thread the widget runs it directly; in worker mode `pipeline.worker.ts` owns the source (the live stream or
+the replay), the parser and the buffers, and posts one snapshot per 250 ms flush: the rates, and the eight feed rows
+only when they changed. The page does nothing per message. A worker has no `document`, so the page pauses it when the
+tab is hidden. The worker is a 3.4 KB gzip chunk, loaded only when the panel switches to it.
+
+Same method as the ceiling above, three runs per cell, median; no CPU slowdown (see the note on throttling).
+
+| Rate | Where | Messages | Main thread busy | Script on main | Pipeline in worker | Timer lag p95 / max |
+|---|---|---|---|---|---|---|
+| ×100 | main thread | 4,747 /s | 67.8 ms/s | 24.2 ms/s | — | 1.1 / 1.9 ms |
+| ×100 | worker | 4,772 /s | 63.3 ms/s | 4.5 ms/s | 18–23 ms/s | 1.2 / 2.5 ms |
+| ×1000 | main thread | 47,371 /s | **210.9 ms/s** | 164.1 ms/s | — | 1.3 / 4.1 ms |
+| ×1000 | worker | 47,504 /s | **48.0 ms/s** | 3.5 ms/s | 133–140 ms/s | 1.2 / 2.6 ms |
+
+At ×1000 the worker takes 77 % of the main thread's work away: busy time falls from 211 to 48 ms/s, and what remains
+is rendering, the same as at any rate. The work itself does not get cheaper, it moves to another core. Responsiveness
+was never the problem: the timer probe (a 10 ms interval measuring how late it fires) stays around a millisecond
+either way, because the replay already delivers its work in small slices.
+
+**Verdict.** At the live rate, about 50 messages a second, the pipeline costs under a millisecond a second on the main
+thread and the worker buys nothing but an extra request; the board keeps the main thread as the default. The worker
+pays off from a few thousand messages a second, the range of a firehose such as Bluesky's.
+
+CPU throttling applies to the page's main thread only, not to the worker, so a "4× slower" run makes the worker look
+three times cheaper than it is. Worker numbers are quoted without throttling.
+
+### Found on the way
+
+- `sseSource` removed its `visibilitychange` listener on dispose even when it had not added one. On the main thread
+  that was harmless; in the worker, which has no `document`, it threw on the first pause.
+- The live feed showed titles of user and user-talk pages, which are editor names ("User talk:…" in any language).
+  The schema now reads the page's namespace and withholds those titles; the edits still count towards the rates.

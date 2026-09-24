@@ -5,7 +5,18 @@ import { FrameMeter } from '@/core/perf/frames'
 import { streamMeter } from '@/core/perf/stream'
 import { summarizeResources, type ResourceLike, type ResourceTotals } from '@/core/perf/resources'
 import { watchLongFrames, watchResources, watchVitals, type Rating, type Vital, type VitalName } from '@/core/perf/vitals'
-import { REPLAY_RATES, onReplayRate, replayRate, setReplayRate, type ReplayRate } from '@/core/streams/load'
+import {
+  PIPELINE_MODES,
+  REPLAY_RATES,
+  onPipelineMode,
+  onReplayRate,
+  pipelineMode,
+  replayRate,
+  setPipelineMode,
+  setReplayRate,
+  type PipelineMode,
+  type ReplayRate,
+} from '@/core/streams/load'
 
 interface Snapshot {
   vitals: Partial<Record<VitalName, Vital>>
@@ -14,7 +25,7 @@ interface Snapshot {
   stalls: number
   resources: ResourceTotals
   costMsPerS?: number
-  stream?: { perS: number; msPerS: number; msPerEvent: number }
+  stream?: { perS: number; msPerS: number; offThreadMsPerS: number; msPerEvent: number }
 }
 
 // Observers and frames write into plain objects; the template sees one snapshot per second.
@@ -31,6 +42,7 @@ const stops: (() => void)[] = []
 const snapshot = shallowRef<Snapshot>({ vitals: {}, stalls: 0, resources: summarizeResources([]) })
 const open = ref(false)
 const rate = ref<ReplayRate>(replayRate())
+const mode = ref<PipelineMode>(pipelineMode())
 const root = ref<HTMLElement>()
 
 // Its own work is timed too, so the panel can say what watching costs.
@@ -64,12 +76,20 @@ const flush = timed(() => {
   costSince = now
 })
 
-function streamStats({ events, ms }: { events: number; ms: number }, windowMs: number): Snapshot['stream'] {
+function streamStats(
+  { events, ms, offThreadMs }: { events: number; ms: number; offThreadMs: number },
+  windowMs: number,
+): Snapshot['stream'] {
   if (events === 0) return undefined
-  return { perS: (events * 1000) / windowMs, msPerS: (ms * 1000) / windowMs, msPerEvent: ms / events }
+  const perS = (n: number) => (n * 1000) / windowMs
+  return { perS: perS(events), msPerS: perS(ms), offThreadMsPerS: perS(offThreadMs), msPerEvent: (ms + offThreadMs) / events }
 }
 
 const RATE_LABEL: Record<ReplayRate, string> = { 0: 'Live', 1: '×1', 10: '×10', 100: '×100', 1000: '×1000' }
+const MODE_LABEL: Record<PipelineMode, string> = { main: 'Main thread', worker: 'Worker' }
+const CHOICE =
+  'h-8 flex-1 cursor-pointer rounded-full border px-2 label transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal motion-reduce:transition-none'
+const choiceTone = (on: boolean) => (on ? 'border-signal text-signal' : 'border-line text-muted hover:text-ink')
 
 function onVisibility() {
   if (document.hidden) {
@@ -96,7 +116,10 @@ onMounted(() => {
   timer = setInterval(flush, 1000)
   document.addEventListener('visibilitychange', onVisibility)
   document.addEventListener('pointerdown', onPointerDown)
-  stops.push(onReplayRate((next) => (rate.value = next)))
+  stops.push(
+    onReplayRate((next) => (rate.value = next)),
+    onPipelineMode((next) => (mode.value = next)),
+  )
 })
 
 onBeforeUnmount(() => {
@@ -191,6 +214,9 @@ const vitalTone = (name: VitalName) => {
         <dt>Cost of listening <span class="text-muted">· main thread</span></dt>
         <dd>{{ snapshot.stream ? `${formatMs(snapshot.stream.msPerS)}/s` : '…' }}</dd>
 
+        <dt>Delegated <span class="text-muted">· in a worker</span></dt>
+        <dd>{{ snapshot.stream && mode === 'worker' ? `${formatMs(snapshot.stream.offThreadMsPerS)}/s` : '—' }}</dd>
+
         <dt>Per message <span class="text-muted">· parse and store</span></dt>
         <dd>{{ snapshot.stream ? formatUs(snapshot.stream.msPerEvent) : '…' }}</dd>
 
@@ -208,15 +234,28 @@ const vitalTone = (name: VitalName) => {
             :key="option"
             type="button"
             :aria-pressed="rate === option"
-            class="h-8 flex-1 cursor-pointer rounded-full border px-2 label transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal motion-reduce:transition-none"
-            :class="rate === option ? 'border-signal text-signal' : 'border-line text-muted hover:text-ink'"
+            :class="[CHOICE, choiceTone(rate === option)]"
             @click="setReplayRate(option)"
           >
             {{ RATE_LABEL[option] }}
           </button>
         </div>
+        <p id="perf-hud-mode" class="mt-4 text-xs">Hire an intern <span class="text-muted">· where messages are parsed</span></p>
+        <div class="mt-2 flex gap-2" role="group" aria-labelledby="perf-hud-mode">
+          <button
+            v-for="option in PIPELINE_MODES"
+            :key="option"
+            type="button"
+            :aria-pressed="mode === option"
+            :class="[CHOICE, choiceTone(mode === option)]"
+            @click="setPipelineMode(option)"
+          >
+            {{ MODE_LABEL[option] }}
+          </button>
+        </div>
         <p class="mt-2 text-[11px] text-muted">
-          A recorded minute of the Wikipedia stream, played through the same code as the live one.
+          A recorded minute of the Wikipedia stream, played through the same code as the live one, on the page's main
+          thread or in a Web Worker.
         </p>
       </div>
 

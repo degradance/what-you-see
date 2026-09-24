@@ -52,6 +52,7 @@ export const sseSource = (url: string, pauseWhenHidden = true): Source => (handl
   return () => {
     disposed = true
     close()
-    document.removeEventListener('visibilitychange', onVisibilityChange)
+    // A worker has no document; there the owner pauses the source instead.
+    if (pauseWhenHidden) document.removeEventListener('visibilitychange', onVisibilityChange)
   }
 }

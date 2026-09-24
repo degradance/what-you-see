@@ -32,7 +32,8 @@ export class ReplayCursor {
 // than the messages themselves, and the live stream also arrives in network-sized batches.
 const TICK_MS = 20
 
-export function replaySource(load: () => Promise<Recording>, rate: number): Source {
+// A worker has no document; its owner pauses it instead, so `pauseWhenHidden` is off there.
+export function replaySource(load: () => Promise<Recording>, rate: number, pauseWhenHidden = true): Source {
   return (handlers) => {
     let timer: ReturnType<typeof setInterval> | undefined
     let disposed = false
@@ -61,12 +62,12 @@ export function replaySource(load: () => Promise<Recording>, rate: number): Sour
     }
 
     handlers.onStatus?.('connecting')
-    document.addEventListener('visibilitychange', onVisibilityChange)
+    if (pauseWhenHidden) document.addEventListener('visibilitychange', onVisibilityChange)
     load().then(
       (recording) => {
         if (disposed) return
         cursor = new ReplayCursor(recording)
-        if (document.hidden) handlers.onStatus?.('paused')
+        if (pauseWhenHidden && document.hidden) handlers.onStatus?.('paused')
         else start()
       },
       () => !disposed && handlers.onStatus?.('reconnecting'),
@@ -75,7 +76,7 @@ export function replaySource(load: () => Promise<Recording>, rate: number): Sour
     return () => {
       disposed = true
       stop()
-      document.removeEventListener('visibilitychange', onVisibilityChange)
+      if (pauseWhenHidden) document.removeEventListener('visibilitychange', onVisibilityChange)
     }
   }
 }

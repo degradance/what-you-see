@@ -11,5 +11,7 @@ export default defineConfig({
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
   build: { target: 'es2022' },
+  // Module workers can split code, so Exhibit A's worker loads the recording only when a replay asks for it.
+  worker: { format: 'es' },
   test: { environment: 'node', include: ['src/**/*.test.ts'] },
 })

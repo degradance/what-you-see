@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { onReplayRate, replayRate, setReplayRate } from './load'
+import { onPipelineMode, onReplayRate, pipelineMode, replayRate, setPipelineMode, setReplayRate } from './load'
 
 describe('replay rate', () => {
   it('starts on the live stream and notifies on change only', () => {
@@ -14,5 +14,15 @@ describe('replay rate', () => {
     setReplayRate(0)
     expect(listener).toHaveBeenCalledTimes(1)
     expect(replayRate()).toBe(0)
+  })
+
+  it('keeps the pipeline mode apart from the rate', () => {
+    const listener = vi.fn()
+    onPipelineMode(listener)
+    setPipelineMode('worker')
+    expect(pipelineMode()).toBe('worker')
+    expect(replayRate()).toBe(0)
+    expect(listener).toHaveBeenCalledWith('worker')
+    setPipelineMode('main')
   })
 })
