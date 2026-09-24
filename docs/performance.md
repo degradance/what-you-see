@@ -78,3 +78,20 @@ moves, so nothing is counted as a shift. The empty rows also reserve the feed's 
 
 Layout time did not drop: the rows still reflow when their text changes. The fix is for visual stability, not for CPU.
 What is left of CLS happens in the first ~150 ms, when the cards swap their loading line for the real layout.
+
+### 2 · The fallback font takes the web font's shape
+
+On a phone the title and the tagline were set in Georgia until Instrument Serif arrived. Georgia is about a quarter
+wider, so both wrapped onto a second line and the header lost 85 px at the swap, moving the whole board. Local Georgia
+and Times New Roman are now declared as fallback faces with `size-adjust` and ascent/descent overrides measured against
+Instrument Serif: line heights match exactly and widths within 2–5 %, and the header keeps its height through the swap.
+
+| Metric | Before (after change 1) | After |
+|---|---|---|
+| CLS, mobile | 0.227 | **0.001** |
+| CLS, desktop | 0.167 | 0.167 |
+
+The mobile number flatters the board. Under Slow 4G the widget chunks arrive before the first paint, so the
+"Decrypting signal…" line is never drawn. Without throttling, on the same phone viewport, the line is painted and its
+swap for the widget still scores 0.44; on desktop it is the whole remaining 0.167. Phones without Georgia or
+Times New Roman (Android) fall back to an unadjusted serif and keep the old shift.

@@ -4,6 +4,47 @@
 @import '@fontsource/jetbrains-mono/latin-400.css';
 @import '@fontsource/jetbrains-mono/latin-600.css';
 
+/* Local fonts reshaped to Instrument Serif's width and line metrics. Until the web font arrives, text set in the fallback
+   wraps where the real face will, so the swap moves nothing. Instrument Serif is about a quarter narrower than Georgia;
+   the overrides are scaled by size-adjust, hence the values above 100 %. */
+@font-face {
+  font-family: 'Instrument Serif Fallback';
+  src: local('Georgia');
+  size-adjust: 74%;
+  ascent-override: 134%;
+  descent-override: 42%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Instrument Serif Fallback';
+  font-style: italic;
+  src: local('Georgia Italic'), local('Georgia-Italic');
+  size-adjust: 75.5%;
+  ascent-override: 131%;
+  descent-override: 41%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Instrument Serif Fallback Times';
+  src: local('Times New Roman');
+  size-adjust: 78.5%;
+  ascent-override: 126%;
+  descent-override: 39%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Instrument Serif Fallback Times';
+  font-style: italic;
+  src: local('Times New Roman Italic'), local('TimesNewRomanPS-ItalicMT');
+  size-adjust: 84%;
+  ascent-override: 118%;
+  descent-override: 37%;
+  line-gap-override: 0%;
+}
+
 /* dark = "Redacted" (default), light = "Declassified". Both share one set of tokens. */
 :root,
 :root[data-theme='dark'] {
@@ -48,7 +89,7 @@
   --color-signal: var(--signal);
   --color-warn: var(--warn);
   --color-live: var(--live);
-  --font-serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  --font-serif: 'Instrument Serif', 'Instrument Serif Fallback', 'Instrument Serif Fallback Times', serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 }
 
