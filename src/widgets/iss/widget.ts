@@ -3,6 +3,7 @@ import { defineWidget } from '../registry'
 export default defineWidget({
   id: 'iss',
   exhibit: 'C',
+  short: 'ISS',
   title: 'What is passing overhead?',
   subtitle: 'The International Space Station, position and trail · wheretheiss.at',
   span: 2,

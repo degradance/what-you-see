@@ -55,6 +55,20 @@
 @layer base {
   html {
     background: var(--canvas);
+    /* Anchored cards land clear of the fixed bar: below it from `sm`, above it on a phone. */
+    scroll-padding: 1rem 0 4rem;
+  }
+
+  @media (min-width: 40rem) {
+    html {
+      scroll-padding: 4.5rem 0 1rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
   }
 
   /* Scanlines are part of the background, not an overlay, so they never stripe the text. */

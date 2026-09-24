@@ -3,6 +3,7 @@ import { defineWidget } from '../registry'
 export default defineWidget({
   id: 'chatter',
   exhibit: 'E',
+  short: 'Chatter',
   title: 'What is everyone talking about?',
   subtitle: 'The front page, in rank order · Hacker News',
   span: 1,

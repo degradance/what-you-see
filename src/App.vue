@@ -2,7 +2,7 @@
 import { caseNumber } from '@/core/case-number'
 import Board from './shell/Board.vue'
 import Clock from './shell/Clock.vue'
-import ThemeToggle from './shell/ThemeToggle.vue'
+import NavBar from './shell/NavBar.vue'
 import Typewriter from './shell/Typewriter.vue'
 
 // Every visit opens a different case; the number is drawn once, so it never changes under the reader.
@@ -10,8 +10,15 @@ const fileNumber = caseNumber()
 </script>
 
 <template>
-  <div class="mx-auto flex min-h-screen max-w-6xl flex-col px-4 py-8 sm:px-8 sm:py-12">
-    <header class="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+  <a
+    href="#board"
+    class="sr-only z-50 bg-signal px-4 py-2 text-canvas focus:not-sr-only focus:fixed focus:top-2 focus:left-2"
+    >Skip to the board</a
+  >
+  <NavBar :file-number="fileNumber" />
+  <!-- The bar sits at the bottom on a phone and at the top from `sm`; the page leaves room on that side. -->
+  <div class="mx-auto flex min-h-screen max-w-6xl flex-col px-4 pt-8 pb-20 sm:px-8 sm:pt-24 sm:pb-12">
+    <header>
       <div>
         <p class="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] tracking-[0.18em] uppercase">
           <span class="text-signal">Case file № {{ fileNumber }}</span>
@@ -27,7 +34,6 @@ const fileNumber = caseNumber()
           text="Everything is live. Nothing is a coincidence."
         />
       </div>
-      <ThemeToggle />
     </header>
 
     <main class="mt-12 flex-1">

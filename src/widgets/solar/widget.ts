@@ -3,6 +3,7 @@ import { defineWidget } from '../registry'
 export default defineWidget({
   id: 'solar',
   exhibit: 'D',
+  short: 'Sun',
   title: 'How is the Sun feeling today?',
   subtitle: 'Planetary K-index, three-hour readings · NOAA SWPC',
   span: 2,

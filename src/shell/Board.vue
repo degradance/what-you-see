@@ -43,7 +43,7 @@ const ROWS = { 1: '', 2: 'lg:row-span-2' } as const
 </script>
 
 <template>
-  <section aria-label="Evidence board">
+  <section id="board" aria-label="Evidence board">
     <StringBoard :links="links" class="grid grid-cols-1 gap-8 lg:grid-cols-3 lg:gap-10">
       <Card
         v-for="{ def, component } in cards"

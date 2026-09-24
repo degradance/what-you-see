@@ -13,7 +13,8 @@ Dark ("Redacted") by default, light ("Declassified") behind the switch.
 ## Status
 
 Live now: **Exhibit A**, a real-time feed of Wikipedia edits, **Exhibit B**, a globe of the past day's earthquakes, **Exhibit C**, the ISS with its trail and field of view, **Exhibit D**, a week of the planetary K-index, and **Exhibit E**, the Hacker News front page.
-Next: a performance HUD backed by measurements.
+A navigation bar carries a live performance panel ("Who watches the watchers"): LCP, INP, CLS, frame rate, long frames and
+the compressed bytes this page loaded, measured in the visitor's own browser. Next: recorded baselines and a load generator.
 
 ## Run it
 
@@ -44,6 +45,9 @@ npm run dev
   itself out by the width of its card (`@xl:` container variants), not by the viewport.
 - **Hot paths avoid reactivity.** Stream events go into plain buffers; the DOM updates four times a second, whatever the
   event rate.
+- **The panel does not cost what it measures.** It is a lazy chunk loaded once the page is idle; its buffered observers
+  still see the LCP that happened before it arrived, it updates once a second, and it reports its own main-thread time.
+  `web-vitals` (≈ 2.5 KB gzip) is its only dependency, for metric definitions that match Chrome's.
 - **Data is validated at the edge** with valibot; malformed events are dropped, never thrown.
 
 ## Data sources

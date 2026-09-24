@@ -13,7 +13,7 @@ defineProps<{
 </script>
 
 <template>
-  <article :data-card-id="cardId" class="card relative flex min-w-0 flex-col border border-line bg-surface p-5 sm:p-6">
+  <article :id="`exhibit-${exhibit.toLowerCase()}`" :data-card-id="cardId" class="card relative flex min-w-0 flex-col border border-line bg-surface p-5 sm:p-6">
     <header class="flex items-start justify-between gap-4">
       <p class="text-[11px] tracking-[0.18em] text-muted uppercase">Exhibit {{ exhibit }}</p>
       <p
