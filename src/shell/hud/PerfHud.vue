@@ -86,7 +86,7 @@ function streamStats(
 }
 
 const RATE_LABEL: Record<ReplayRate, string> = { 0: 'Live', 1: '×1', 10: '×10', 100: '×100', 1000: '×1000' }
-const MODE_LABEL: Record<PipelineMode, string> = { naive: 'Each message', main: 'Batched', worker: 'Worker' }
+const MODE_LABEL: Record<PipelineMode, string> = { naive: 'Instant', main: 'Batched', worker: 'Worker' }
 const CHOICE =
   'h-8 flex-1 cursor-pointer rounded-full border px-2 label transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal motion-reduce:transition-none'
 const choiceTone = (on: boolean) => (on ? 'border-signal text-signal' : 'border-line text-muted hover:text-ink')
@@ -172,7 +172,7 @@ const vitalTone = (name: VitalName) => {
       v-show="open"
       id="perf-hud"
       aria-labelledby="perf-hud-title"
-      class="fixed inset-x-4 bottom-14 z-40 border border-line bg-surface p-5 shadow-[var(--card-shadow)] sm:absolute sm:inset-x-auto sm:top-full sm:right-0 sm:bottom-auto sm:mt-2 sm:w-96"
+      class="fixed inset-x-4 bottom-14 z-40 max-h-[calc(100dvh-5rem)] overflow-y-auto overscroll-contain border border-line bg-surface p-5 shadow-[var(--card-shadow)] sm:absolute sm:inset-x-auto sm:top-full sm:right-0 sm:bottom-auto sm:mt-2 sm:max-h-[calc(100dvh-4.5rem)] sm:w-96"
     >
       <h2 id="perf-hud-title" class="font-serif text-2xl leading-tight">Who watches the watchers</h2>
       <p class="mt-1 text-xs text-muted">This page, measured live in your browser. Nothing is sent anywhere.</p>
@@ -254,7 +254,7 @@ const vitalTone = (name: VitalName) => {
           </button>
         </div>
         <p class="mt-2 text-[11px] text-muted">
-          A recorded minute of the Wikipedia stream, played through the same code as the live one. "Each message"
+          A recorded minute of the Wikipedia stream, played through the same code as the live one. "Instant"
           updates the page for every message; "Batched" four times a second; "Worker" also parses off the main thread.
         </p>
       </div>
