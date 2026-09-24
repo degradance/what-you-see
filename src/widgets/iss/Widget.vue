@@ -146,8 +146,10 @@ onBeforeUnmount(() => {
   <div class="flex flex-col gap-4 @xl:grid @xl:grid-cols-2 @xl:grid-rows-[auto_auto_1fr] @xl:items-start @xl:gap-x-8">
     <div class="@xl:col-start-2">
       <div>
+        <!-- The globe keeps its canvas from the first frame, so until the feed answers only the numbers are blacked out. -->
         <p class="metric text-ink">
-          {{ position ? formatKm(position.speedKmh) : '—' }}
+          <span v-if="position" class="motion-safe:declassify">{{ formatKm(position.speedKmh) }}</span>
+          <span v-else class="redacted">00,000</span>
         </p>
         <p class="mt-2 caption text-muted">km/h · orbital speed</p>
       </div>
@@ -160,13 +162,15 @@ onBeforeUnmount(() => {
     />
 
     <p class="text-xs text-muted @xl:col-start-2">
-      <template v-if="position">Field of view: {{ formatKm(position.footprintKm) }} km wide.</template>
-      <template v-else>Field of view: unknown.</template>
+      Field of view:
+      <span v-if="position" class="motion-safe:declassify">{{ formatKm(position.footprintKm) }}</span>
+      <span v-else class="redacted">0,000</span>
+      km wide.
       <br />
       Currently observing: everyone in it. Drag to look away.
     </p>
 
-    <dl v-if="position" class="divide-y divide-line border-y border-line text-xs @xl:col-start-2">
+    <dl v-if="position" class="divide-y divide-line border-y border-line text-xs motion-safe:declassify @xl:col-start-2">
       <div class="flex items-baseline justify-between gap-3 py-1.5">
         <dt class="label-micro text-muted">Latitude</dt>
         <dd>{{ formatLat(position.lat) }}</dd>
@@ -184,6 +188,11 @@ onBeforeUnmount(() => {
         <dd>{{ position.visibility }}</dd>
       </div>
     </dl>
-    <p v-else class="border-y border-line py-3 text-xs text-muted @xl:col-start-2">Waiting for the first transmission…</p>
+    <dl v-else class="divide-y divide-line border-y border-line text-xs @xl:col-start-2" aria-hidden="true">
+      <div v-for="term in ['Latitude', 'Longitude', 'Altitude', 'Sunlight']" :key="term" class="flex items-baseline justify-between gap-3 py-1.5">
+        <dt class="label-micro text-muted">{{ term }}</dt>
+        <dd><span class="redacted">00.00° N</span></dd>
+      </div>
+    </dl>
   </div>
 </template>

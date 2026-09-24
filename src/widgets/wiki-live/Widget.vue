@@ -3,14 +3,14 @@ import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
 import { RateCounter } from '@/core/rate-counter'
 import { RingBuffer } from '@/core/ring-buffer'
 import { connectSSE, type StreamStatus } from '@/core/streams/sse'
+import { FEED_SIZE, RATE_WINDOW_S } from './layout'
 import { parseChange, type Change } from './schema'
+import Skeleton from './Skeleton.vue'
 
 // The card header shows the connection state, so the widget only reports it.
 const emit = defineEmits<{ status: [status: StreamStatus] }>()
 
 const STREAM_URL = 'https://stream.wikimedia.org/v2/stream/recentchange'
-const FEED_SIZE = 8
-const RATE_WINDOW_S = 10
 const FLUSH_MS = 250
 
 // Hot path: plain objects, no reactivity. Reactive state is only touched from `flush`.
@@ -20,12 +20,13 @@ const latest = new RingBuffer<Change>(FEED_SIZE)
 let dirty = false
 
 const feed = shallowRef<Change[]>([])
+const ready = ref(false)
 const humansPerSec = ref(0)
 const botsPerSec = ref(0)
 
 const total = computed(() => humansPerSec.value + botsPerSec.value)
 // A fixed set of rows keyed by position: new edits rewrite the text in place instead of pushing every row down,
-// which the browser would count as a layout shift four times a second. Empty slots hold the height from the start.
+// which the browser would count as a layout shift four times a second.
 const slots = computed(() => Array.from({ length: FEED_SIZE }, (_, i) => feed.value[i]))
 const botShare = computed(() =>
   total.value > 0 ? Math.round((botsPerSec.value / total.value) * 100) : 0,
@@ -43,6 +44,7 @@ function flush() {
   botsPerSec.value = botRate.perSecond(now)
   if (dirty) {
     feed.value = latest.latest()
+    ready.value = true
     dirty = false
   }
 }
@@ -67,7 +69,8 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="flex flex-col gap-5">
+  <Skeleton v-if="!ready" />
+  <div v-else class="flex flex-col gap-5 motion-safe:declassify">
     <div>
       <div>
         <p class="metric text-ink">{{ total.toFixed(1) }}</p>
@@ -96,7 +99,6 @@ onBeforeUnmount(() => {
             {{ change.type === 'new' ? 'new' : change.bot ? 'bot' : 'edit' }}
           </span>
         </template>
-        <span v-else-if="i === 0 && feed.length === 0" class="text-muted">Waiting for the first transmission…</span>
         <span v-else aria-hidden="true">&nbsp;</span>
       </li>
     </ol>

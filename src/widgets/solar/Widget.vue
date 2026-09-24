@@ -4,6 +4,7 @@ import { poll } from '@/core/streams/poll'
 import type { StreamStatus } from '@/core/streams/sse'
 import { formatKp, formatWhen, kpLevel, layoutChart, summarize, type KpLevel } from './kp'
 import { parseKp, type KpSample } from './schema'
+import Skeleton from './Skeleton.vue'
 
 // The card header shows the connection state, so the widget only reports it.
 const emit = defineEmits<{ status: [status: StreamStatus] }>()
@@ -59,7 +60,8 @@ onBeforeUnmount(() => stopPolling?.())
 </script>
 
 <template>
-  <div class="flex flex-col gap-5">
+  <Skeleton v-if="!chart || !summary" />
+  <div v-else class="flex flex-col gap-5 motion-safe:declassify">
     <div class="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
       <div>
         <p class="metric" :class="level ? TEXT_TONE[level] : 'text-ink'">
@@ -69,10 +71,10 @@ onBeforeUnmount(() => stopPolling?.())
           Kp index · {{ level ? LEVEL_LABEL[level] : 'no signal' }}
         </p>
       </div>
-      <p class="max-w-64 text-xs text-muted">{{ verdict }}</p>
+      <!-- Two lines reserved: the verdict for a storm wraps, the one for a quiet Sun does not. -->
+      <p class="min-h-8 max-w-64 text-xs text-muted">{{ verdict }}</p>
     </div>
 
-    <template v-if="chart && summary">
       <figure class="m-0" role="img" :aria-label="chartLabel">
         <div class="relative h-32">
           <!-- Stretched to the card on purpose: it only holds rectangles, and text lives outside it, so nothing gets squashed. -->
@@ -126,7 +128,5 @@ onBeforeUnmount(() => stopPolling?.())
           <dd>{{ summary.stormReadings }} of {{ samples?.length }}</dd>
         </div>
       </dl>
-    </template>
-    <p v-else class="border-y border-line py-3 text-xs text-muted">Waiting for the first transmission…</p>
   </div>
 </template>

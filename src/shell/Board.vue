@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { defineAsyncComponent, reactive } from 'vue'
+import { defineAsyncComponent, h, reactive } from 'vue'
 import type { StreamStatus } from '@/core/streams/sse'
 import { widgets } from '@/widgets'
 import Card from './Card.vue'
-import Decrypting from './Decrypting.vue'
+import Redacted from './Redacted.vue'
 import SignalLost from './SignalLost.vue'
 import StringBoard from './StringBoard.vue'
 
@@ -17,7 +17,8 @@ const cards = widgets.map((def) => ({
   def,
   component: defineAsyncComponent({
     loader: def.load,
-    loadingComponent: Decrypting,
+    // The skeleton ships in the eager chunk, so the card has its final height before the widget's code arrives.
+    loadingComponent: { render: () => h(Redacted, null, () => h(def.skeleton)) },
     errorComponent: SignalLost,
     delay: 0,
     timeout: 15_000,

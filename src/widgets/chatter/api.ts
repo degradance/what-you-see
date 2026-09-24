@@ -1,10 +1,11 @@
 import { fetchParsed } from '@/core/streams/fetch-json'
+import { STORY_COUNT } from './layout'
 import { parseIds, parseStory, type Story } from './schema'
+
+export { STORY_COUNT }
 
 const API = 'https://hacker-news.firebaseio.com/v0'
 // The API has no "top ten with details" call: one request lists ids, then each story is its own request.
-// Six is what a card shows before its list runs out of room, so a round stays at seven requests instead of eleven.
-export const STORY_COUNT = 6
 
 export interface LoadOptions {
   signal?: AbortSignal

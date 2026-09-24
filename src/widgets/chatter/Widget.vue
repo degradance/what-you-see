@@ -4,6 +4,7 @@ import { pollTask } from '@/core/streams/poll'
 import type { StreamStatus } from '@/core/streams/sse'
 import { loadFrontPage } from './api'
 import type { Story } from './schema'
+import Skeleton from './Skeleton.vue'
 import { busiest, discussionUrl, formatComments, formatPoints, totalComments } from './stories'
 
 // The card header shows the connection state, so the widget only reports it.
@@ -34,13 +35,14 @@ onBeforeUnmount(() => stopPolling?.())
 </script>
 
 <template>
-  <div class="flex flex-1 flex-col gap-4">
+  <Skeleton v-if="stories.length === 0" />
+  <div v-else class="flex flex-1 flex-col gap-4 motion-safe:declassify">
     <div class="flex items-end gap-4">
       <p class="metric text-ink">
-        {{ stories.length > 0 ? total.toLocaleString('en-US') : '—' }}
+        {{ total.toLocaleString('en-US') }}
       </p>
       <div class="min-w-0 pb-1">
-        <p class="caption text-muted">comments · top {{ stories.length || 'stories' }}</p>
+        <p class="caption text-muted">comments · top {{ stories.length }}</p>
         <p v-if="loudest" class="mt-1 text-xs text-muted">Loudest thread: {{ loudest.comments.toLocaleString('en-US') }}.</p>
       </div>
     </div>
@@ -71,7 +73,6 @@ onBeforeUnmount(() => stopPolling?.())
           </p>
         </div>
       </li>
-      <li v-if="stories.length === 0" class="py-3 text-muted">Waiting for the first transmission…</li>
     </ol>
   </div>
 </template>

@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
 import { createGlobe, type Globe, type GlobeFrame } from '@/core/globe/globe'
 import { poll } from '@/core/streams/poll'
 import type { StreamStatus } from '@/core/streams/sse'
+import { LATEST_COUNT } from './layout'
 import { formatAgo, isRecent, markerRadius } from './quakes'
 import { parseQuakes, type Quake } from './schema'
 
@@ -12,13 +13,12 @@ const emit = defineEmits<{ status: [status: StreamStatus] }>()
 const FEED_URL = 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson'
 // The feed is cached for 60 s upstream; asking faster only returns the same bytes.
 const POLL_MS = 60_000
-// More rows than a card usually shows: the list starts at four rows and grows into the spare height of its bento cell.
-// It grows from a fixed basis: `flex-1` would size the column by all rows whenever its height is not fixed.
-const LATEST_COUNT = 16
 const PULSE_MS = 2_400
 const TAU = Math.PI * 2
 
 const quakes = shallowRef<Quake[]>([])
+// The globe keeps its canvas from the first frame, so until the feed answers only the numbers are blacked out.
+const loaded = ref(false)
 const now = ref(Date.now())
 const canvas = ref<HTMLCanvasElement | null>(null)
 
@@ -63,6 +63,7 @@ function overlay({ ctx, now: t, palette, motion, project }: GlobeFrame) {
 function onData(list: Quake[]) {
   now.value = Date.now()
   quakes.value = list
+  loaded.value = true
   // Largest first, so the small quakes are drawn on top of the big ones instead of hidden under them.
   drawList = [...list].sort((a, b) => b.mag - a.mag)
   globe?.invalidate()
@@ -102,7 +103,10 @@ onBeforeUnmount(() => {
   <div class="flex flex-1 flex-col gap-4 @xl:grid @xl:grid-cols-2 @xl:grid-rows-[auto_auto_1fr] @xl:items-start @xl:gap-x-8">
     <div class="@xl:col-start-2">
       <div>
-        <p class="metric text-ink">{{ quakes.length }}</p>
+        <p class="metric text-ink">
+          <span v-if="loaded" class="motion-safe:declassify">{{ quakes.length }}</span>
+          <span v-else class="redacted">00</span>
+        </p>
         <p class="mt-2 caption text-muted">events · past 24 h</p>
       </div>
     </div>
@@ -114,9 +118,13 @@ onBeforeUnmount(() => {
     />
 
     <p class="text-xs text-muted @xl:col-start-2">
-      <span class="text-signal">●</span> {{ lastHour }} in the last hour ·
-      <span v-if="strongest">strongest M {{ strongest.mag.toFixed(1) }}</span>
-      <span v-else>strongest —</span>
+      <span class="text-signal">●</span>
+      <span v-if="!loaded" class="redacted">0 in the last hour · strongest M 0.0</span>
+      <span v-else class="motion-safe:declassify">
+        {{ lastHour }} in the last hour ·
+        <template v-if="strongest">strongest M {{ strongest.mag.toFixed(1) }}</template>
+        <template v-else>strongest —</template>
+      </span>
       <br />
       Correlation with anything: none. Drag the globe.
     </p>
@@ -135,7 +143,13 @@ onBeforeUnmount(() => {
           {{ formatAgo(quake.time, now) }}
         </span>
       </li>
-      <li v-if="latest.length === 0" class="py-3 text-muted">Waiting for the first transmission…</li>
+      <template v-if="!loaded">
+        <li v-for="i in LATEST_COUNT" :key="i" class="flex items-baseline gap-3 py-1.5 @xl:nth-[n+5]:hidden" aria-hidden="true">
+          <span class="w-9 shrink-0"><span class="redacted">M 0.0</span></span>
+          <span class="min-w-0 flex-1 truncate"><span class="redacted">Kermadec Islands</span></span>
+          <span class="shrink-0 label-micro"><span class="redacted">00 min</span></span>
+        </li>
+      </template>
     </ol>
   </div>
 </template>

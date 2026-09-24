@@ -1,4 +1,5 @@
 import { defineWidget } from '../registry'
+import Skeleton from './Skeleton.vue'
 
 export default defineWidget({
   id: 'seismic',
@@ -9,4 +10,5 @@ export default defineWidget({
   span: 1,
   rows: 2,
   load: () => import('./Widget.vue'),
+  skeleton: Skeleton,
 })

@@ -95,3 +95,27 @@ The mobile number flatters the board. Under Slow 4G the widget chunks arrive bef
 "Decrypting signal…" line is never drawn. Without throttling, on the same phone viewport, the line is painted and its
 swap for the widget still scores 0.44; on desktop it is the whole remaining 0.167. Phones without Georgia or
 Times New Roman (Android) fall back to an unadjusted serif and keep the old shift.
+
+### 3 · Redacted skeletons
+
+Every widget has a small `Skeleton.vue` that repeats its layout with the data blacked out: placeholder words of the
+usual length in transparent text over a 14 % `ink` bar, so each line box is the height of the real one. The skeleton
+ships in the eager chunk and is the async component's loading state; the widget keeps the same bars until its first
+data. The globes keep their canvas from the first frame, so B and C black out only their numbers in place.
+
+A declarative block list in `widget.ts` was the first idea; it cannot describe B and C, which switch to two columns on
+the width of their card, so each skeleton is a template with the same classes as its widget. A throwaway check loads
+the board three ways (widget chunks blocked, feeds blocked, live) at 375, 412, 700, 1024 and 1350 px and compares card
+heights: A–D match to the pixel at every width. E's height depends on how many headlines wrap, so on narrow cards it
+can differ by a line or two; from `lg` its row sets the height.
+
+| Metric | Before (after change 2) | After |
+|---|---|---|
+| CLS, mobile (Slow 4G, 4× CPU) | 0.001 | 0.001 |
+| CLS, phone viewport without throttling | 0.44 | **0.001** |
+| CLS, desktop | 0.167 | **0** |
+| Shell JS (gzip) | 31.3 KB | 33.2 KB |
+| First Contentful Paint, mobile | 608 ms | 640 ms |
+
+The five skeletons cost 1.9 KB in the eager chunk and about 30 ms of first paint on the throttled phone; the shell stays
+under its 50 KB budget.

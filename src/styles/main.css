@@ -123,6 +123,30 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Blacked-out text: placeholder words keep the line box of real data, so a skeleton is as tall as what replaces it. */
+/* The bar covers the middle of the glyph box, not all of it, so a 72 px figure reads as a stroke, not a slab. */
+@utility redacted {
+  color: transparent;
+  background: linear-gradient(
+    transparent 18%,
+    color-mix(in srgb, var(--ink) 14%, transparent) 18% 82%,
+    transparent 82%
+  );
+  box-decoration-break: clone;
+  user-select: none;
+}
+
+/* Data replacing its skeleton fades in where the bars were. */
+@utility declassify {
+  animation: declassify 300ms ease-out;
+}
+
+@keyframes declassify {
+  from {
+    opacity: 0;
+  }
+}
+
 @layer base {
   html {
     background: var(--canvas);
