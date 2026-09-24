@@ -60,3 +60,21 @@ viewport both globes are visible and drawing takes about 4.4 ms per frame at 30 
    how this grows with the event rate.
 4. **Loading is fine.** LCP is the title, painted in the fallback font before the web fonts arrive, and there are no
    long tasks during load.
+
+## Changes against the baseline
+
+Same method, same machine, five loads per profile.
+
+### 1 · Exhibit A rewrites its rows in place
+
+The feed now renders a fixed set of eight rows keyed by position. A new edit changes the text of the rows; no row element
+moves, so nothing is counted as a shift. The empty rows also reserve the feed's height before the first event.
+
+| Metric | Baseline mobile | After | Baseline desktop | After |
+|---|---|---|---|---|
+| Cumulative Layout Shift | 0.635 | **0.227** | 0.227 | **0.167** |
+| CLS, worst window in steady state | 0.478 | **0.001** | 0.153 | **0** |
+| Layout, steady state | 9.8 ms/s | 11.5 ms/s | 4.2 ms/s | 4.5 ms/s |
+
+Layout time did not drop: the rows still reflow when their text changes. The fix is for visual stability, not for CPU.
+What is left of CLS happens in the first ~150 ms, when the cards swap their loading line for the real layout.

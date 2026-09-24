@@ -24,6 +24,9 @@ const humansPerSec = ref(0)
 const botsPerSec = ref(0)
 
 const total = computed(() => humansPerSec.value + botsPerSec.value)
+// A fixed set of rows keyed by position: new edits rewrite the text in place instead of pushing every row down,
+// which the browser would count as a layout shift four times a second. Empty slots hold the height from the start.
+const slots = computed(() => Array.from({ length: FEED_SIZE }, (_, i) => feed.value[i]))
 const botShare = computed(() =>
   total.value > 0 ? Math.round((botsPerSec.value / total.value) * 100) : 0,
 )
@@ -85,14 +88,17 @@ onBeforeUnmount(() => {
     </div>
 
     <ol class="divide-y divide-line border-y border-line text-xs">
-      <li v-for="change in feed" :key="change.meta.id" class="flex items-baseline gap-3 py-1.5">
-        <span class="w-36 shrink-0 truncate text-muted">{{ change.meta.domain }}</span>
-        <span class="min-w-0 flex-1 truncate">{{ change.title }}</span>
-        <span class="shrink-0 label-micro text-muted">
-          {{ change.type === 'new' ? 'new' : change.bot ? 'bot' : 'edit' }}
-        </span>
+      <li v-for="(change, i) in slots" :key="i" class="flex items-baseline gap-3 py-1.5">
+        <template v-if="change">
+          <span class="w-36 shrink-0 truncate text-muted">{{ change.meta.domain }}</span>
+          <span class="min-w-0 flex-1 truncate">{{ change.title }}</span>
+          <span class="shrink-0 label-micro text-muted">
+            {{ change.type === 'new' ? 'new' : change.bot ? 'bot' : 'edit' }}
+          </span>
+        </template>
+        <span v-else-if="i === 0 && feed.length === 0" class="text-muted">Waiting for the first transmission…</span>
+        <span v-else aria-hidden="true">&nbsp;</span>
       </li>
-      <li v-if="feed.length === 0" class="py-3 text-muted">Waiting for the first transmission…</li>
     </ol>
   </div>
 </template>
