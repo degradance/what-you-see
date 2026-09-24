@@ -69,7 +69,7 @@ function streamStats({ events, ms }: { events: number; ms: number }, windowMs: n
   return { perS: (events * 1000) / windowMs, msPerS: (ms * 1000) / windowMs, msPerEvent: ms / events }
 }
 
-const RATE_LABEL: Record<ReplayRate, string> = { 0: 'Live', 1: '×1', 10: '×10', 100: '×100' }
+const RATE_LABEL: Record<ReplayRate, string> = { 0: 'Live', 1: '×1', 10: '×10', 100: '×100', 1000: '×1000' }
 
 function onVisibility() {
   if (document.hidden) {

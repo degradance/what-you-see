@@ -1,6 +1,6 @@
 // The visitor's load control, shared between the panel that sets it and the widgets that follow it.
 // 0 is the live stream; any other value replays a recording at that multiple of real time.
-export const REPLAY_RATES = [0, 1, 10, 100] as const
+export const REPLAY_RATES = [0, 1, 10, 100, 1000] as const
 export type ReplayRate = (typeof REPLAY_RATES)[number]
 
 let current: ReplayRate = 0

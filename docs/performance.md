@@ -159,3 +159,19 @@ confirms.
 The panel moved when a late chunk loaded: its value column was sized by content, so "76 KB" becoming "109 KB" widened
 it, rewrapped a label and moved the panel's top edge (0.19 CLS on a phone, where the panel is anchored to the bottom).
 The column now has a fixed width.
+
+### The ceiling: ×1000
+
+| CPU | Messages | Pipeline | Script | Main thread busy | Frame rate | Long frames |
+|---|---|---|---|---|---|---|
+| no slowdown | 47,350 /s | 112 ms/s (2.4 µs each) | 146 ms/s | 182 ms/s | 60 fps | 0 |
+| 4× slower | 47,304 /s | 170 ms/s (3.6 µs each) | 193 ms/s | 223 ms/s | 60 fps | 0 |
+
+At 47 thousand messages a second the stream takes 15–20 % of the main thread and the board still renders every frame:
+the replay delivers its work in 20 ms slices of about 2 ms each, and nothing reaches a long task. This is the "before"
+for moving the pipeline into a Web Worker: the metric that can move is main-thread busy time, not the frame rate.
+
+**The CPU slowdown does not scale microsecond work.** DevTools throttles by pausing the renderer in time slices, so a
+span of a few microseconds is rarely paused. A synthetic `JSON.parse` loop of the same 1.2 KB message measured 1.17 µs
+per call unthrottled and 1.58 µs at "4× slower", not 4.7 µs. Per-message costs in this document are therefore quoted
+without throttling; the throttled profile is only used for totals over seconds.
